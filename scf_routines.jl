@@ -10,7 +10,9 @@ include("g_function.jl")
 include("k_path_perso.jl")
 include("energy_bands.jl")
 
-### Terms
+"""
+Terms
+"""
 reference_PBE_terms = [Kinetic(), AtomicLocal(), AtomicNonlocal(),
                       Ewald(), PspCorrection(), Hartree(), Xc([:gga_x_pbe, :gga_c_pbe])]
 modified_PBE_terms(;g=y->y'y) = [RegularizedKinetic(;g=g),
@@ -18,7 +20,7 @@ modified_PBE_terms(;g=y->y'y) = [RegularizedKinetic(;g=g),
                            PspCorrection(), Hartree(), Xc([:gga_x_pbe, :gga_c_pbe])]
 
 """
-    Graphene
+Graphene
 """
 function model_PBE_graphene(terms)
     ang_to_bohr = 1.88973; a = ang_to_bohr*2.641; # from wiki
@@ -38,7 +40,7 @@ end
 
 function scf_graphene(;n_bands=13, terms=reference_PBE_terms,
                       Ecut=15, kgrid=[8,8,1], kshift=zeros(3))
-    @show n_bands, E_cut, kgrid, kshift
+    @show n_bands, Ecut, kgrid, kshift
     model = model_PBE_graphene(terms)
     basis = PlaneWaveBasis(model; Ecut=Ecut, kgrid=kgrid, kshift=kshift)
     scfres = self_consistent_field(basis, n_bands=n_bands);

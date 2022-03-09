@@ -1,10 +1,10 @@
 """
-Contains all routines to create and analyze a k_path with given
+Contains all routines to create and analyze a kpath with given
 start point, end point and number of k_points.
 """
 basis_given_kcoords(basis, kcoords) = PlaneWaveBasis(basis, kcoords,
                                         [[one(SymOp)] for _ in 1:length(kcoords)])
-function discretize_k_path(k_start, k_end, resolution)
+function discretize_kpath(k_start, k_end, resolution)
     [SVector{3,Float64}(kcoord)
      for kcoord in map(x-> x*k_start .+ (1-x)*k_end, LinRange(0, 1, resolution))]
 end
@@ -18,9 +18,9 @@ function compute_Gvec_jumps_along_path(basis)
 end
 
 ### Plots
-function plot_info_k_path(basis_in, n_bands, k_start, k_end, num_k)
+function plot_info_kpath(basis_in, k_start, k_end, num_k)
     # Compute reduced kcoords and corresponding basis
-    kcoords = discretize_k_path(k_start, k_end, num_k)
+    kcoords = discretize_kpath(k_start, k_end, num_k)
     num_k = length(kcoords)
     basis = basis_given_kcoords(basis_in, kcoords)
 
