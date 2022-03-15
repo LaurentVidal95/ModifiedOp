@@ -3,7 +3,8 @@ Contains all routines to create and analyze a kpath with given
 start point, end point and number of k_points.
 """
 basis_given_kcoords(basis, kcoords) = PlaneWaveBasis(basis, kcoords,
-                                        [[one(SymOp)] for _ in 1:length(kcoords)])
+                               [[one(SymOp)] for _ in 1:length(kcoords)])
+
 function discretize_kpath(k_start, k_end, resolution)
     [SVector{3,Float64}(kcoord)
      for kcoord in map(x-> x*k_start .+ (1-x)*k_end, LinRange(0, 1, resolution))]
