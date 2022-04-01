@@ -12,3 +12,9 @@ function regularized_density(basis::PlaneWaveBasis, ρ; E_reg=20)
     println("Error of H1 approximation: $(Hs_norm(basis, ρ_reg .- ρ, 1)*100)%")
     ρ_reg
 end
+
+function density_in_basis(scfres_ref, basis)
+    add_dim(x) = reshape(x, (size(x)...,1))
+    add_dim(DFTK.interpolate_density(scfres_ref.ρ[:,:,:,1],
+                                     scfres_ref.basis, basis))
+end
