@@ -1,10 +1,9 @@
 """
 scfres is computed with regular kinetic term but basis is for modified kinetic term.
 """
-function bands_along_kpath(ρ_in, basis_in, n_bands, kcoords)
+function bands_along_kpath(ρ, basis, n_bands, kcoords)
     # Compute bands on given kcoords
-    basis = basis_given_kcoords(basis_in, kcoords)
-    bands_data = compute_bands(basis, kcoords, n_bands=n_bands, ρ=ρ_in)
+    bands_data = compute_bands(basis, kcoords, n_bands=n_bands, ρ=ρ)
     i -> [Ek[i] for Ek in bands_data.λ], bands_data
 end
 bands_along_kpath(ρ, basis, n_bands, k_start, k_end, num_k) =
