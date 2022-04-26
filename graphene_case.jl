@@ -10,13 +10,15 @@ reg_function = y->gm(y, ha_2(a, ε))
 Compute ground state density using a big Ecut. This density is used to compute
 the effective potential of H_k is the following computations.
 """
-function reference_data(system; k_path_res=200)
+function reference_data(system; k_path_res=200, n_bands=13)
     # Launch scf with standard kinetic term
     scfres_ref = system.scf()
     kpath = high_symmetry_kpath(scfres_ref.basis.model, kline_density=k_path_res)
+    band_data = compute_band(scfres_ref.basis, kpath.kcoords;
+                             n_bands=n_bands, ρ = scfres_ref.ρ)
     @info "number of k-points: $(length(kpath.kcoords))"
     # Computation of k path for band plot
-    (;system=system, scfres=scfres_ref, kpath=kpath)
+    (;system=system, scfres=scfres_ref, kpath=kpath, band_data=band_data)
 end
 
 """
@@ -36,12 +38,13 @@ function compute_band_and_derivatives(Ecut::T, n_bands::Int64, gm_function;
                                   fft_size=ref_fft_size)
 
     # Interpolate the reference density in the current fft_grid
-    add_dim(x) = reshape(x, (size(x)...,1))
-    ρ_ref = add_dim(DFTK.interpolate_density(ref_data.scfres.ρ[:,:,:,1],
-                                             ref_data.scfres.basis, basis))
+    # add_dim(x) = reshape(x, (size(x)...,1))
+    # ρ_ref = add_dim(DFTK.interpolate_density(ref_data.scfres.ρ[:,:,:,1],
+    #                                          ref_data.scfres.basis, basis))
 
     # Compute energy bands and band derivatives along k-path
     kcoords = ref_data.kpath.kcoords
+    ρ_ref = ref_data.scfres.ρ
 
     # standard
     band_data_std = compute_bands(basis_std, kcoords, n_bands=n_bands, ρ=ρ_ref)
@@ -83,30 +86,38 @@ function bandplots(plot_data; ref_data, savedir="")
     default(fontfamily="Computer Modern",
             linewidth=0.75, framestyle=:box,
             label=nothing, grid=:true,
-            linecolor=RGB(95/255,133/255,255/255))
+            linecolor=RGB(95/255,133/255,255/255),
+            margin=2mm)
+
+    # Reference
+    p_ref = DFTK.plot_band_data(ref_data.band_data;
+                                ref_data.scfres.εF, kpath.klabels)
+    plot!(p_ref, size=(800,500))
+    ylabel!(p_ref, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f")
+    title!(p_ref,"Reference band diagram")
 
     # Standard
     εF, (ymin, ymax) = fermi_and_ylims(plot_data.std_data, kcoords)
     p_std = DFTK.plot_band_data(band_data_std; εF, kpath.klabels)
-    plot!(p_std, size=(750,500))
+    plot!(p_std, size=(800,500))
     ylims!(p_std, (ymin + ymin/10, ymax + ymax/10))
     xlabel!(p_std, " ")
-    ylabel!(p_std, L"\textrm{eigenvalues}-\varepsilon_f\quad(E_h)")
+    ylabel!(p_std, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f")
     title!(p_std,"Standard kinetic term")
 
     # Regularized
     εF, (ymin, ymax) = fermi_and_ylims(plot_data.reg_data, kcoords)
     p_reg = DFTK.plot_band_data(band_data; εF, kpath.klabels)
-    plot!(p_reg, size=(750,500))
+    plot!(p_reg, size=(800,500))
     ylims!(p_reg, (ymin + ymin/10, ymax + ymax/10))
-    ylabel!(p_reg, L"\textrm{eigenvalues}-\varepsilon_f\quad(E_h)")
+    ylabel!(p_reg, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f")
     title!(p_reg,"Modified kinetic term")
 
     # Gather both plots
     p_bands = plot(p_std, p_reg, layout=(2,1))
     !isempty(savedir) && (savefig(p_bands, joinpath(savedir, "band_plot.pdf")))
 
-    p_bands
+    p_ref, p_bands
 end
 
 function plot_band_irregularity(i_band, plot_data, ref_data)

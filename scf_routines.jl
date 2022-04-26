@@ -1,5 +1,5 @@
 using Pkg; Pkg.activate("DFTK_modified_kinetic.jl"); using DFTK;
-using Plots
+using Plots, Measures
 using Unitful, UnitfulAtomic
 using DelimitedFiles
 using LaTeXStrings
@@ -12,12 +12,13 @@ Terms
 """
 PBE_terms(KineticTerm) = [KineticTerm, AtomicLocal(), AtomicNonlocal(),
                        Ewald(), PspCorrection(), Hartree(), Xc([:gga_x_pbe, :gga_c_pbe])]
+# LDA_terms(KinteticTerm) = [KineticTerm, AtomicLocal(), AtomicNonLocal(),
+#                        Ewald(), PspCorrection(), Hartree(), Xc([:lda_xc_teter93])]
 
 """
-Defines all routines to perform a scf computation on graphene
-with either reference or regularized kinetic term
+Graphene
 """
-function graphene(; Ecut_ref=15, kgrid=[8,8,1], n_bands=13)
+function graphene_PBE(; Ecut_ref=15, basis_kwargs...)
     # Defines graphene structure and hamiltonian terms
     function model_PBE_graphene(KineticTerm;
                      a=austrip(1u"Å")*2.641) # Lattice constant of graphene in bohr
@@ -38,23 +39,49 @@ function graphene(; Ecut_ref=15, kgrid=[8,8,1], n_bands=13)
     end
 
     # Construct a plane-wave basis given a kinetic term using model_PBE_graphene
-    function basis_PBE_graphene(KineticTerm; Ecut=15, kgrid=[8,8,1], kshift=zeros(3))
+    function basis_PBE_graphene(KineticTerm; Ecut=Ecut_ref, basis_kwargs...)
         model = model_PBE_graphene(KineticTerm)
-        PlaneWaveBasis(model, Ecut=Ecut, kgrid=kgrid, kshift=kshift)
+        PlaneWaveBasis(model; Ecut=Ecut, basis_kwargs...)
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_graphene(;n_bands=n_bands, KineticTerm=Kinetic(),
-                          Ecut=Ecut_ref, kgrid=kgrid, kshift=zeros(3))
-        basis = basis_PBE_graphene(KineticTerm, Ecut=Ecut, kgrid=kgrid, kshift=kshift)
-        println("basis")
+    function scf_graphene(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref)
+        basis = basis_PBE_graphene(KineticTerm; Ecut=Ecut, basis_kwargs...)
         self_consistent_field(basis, n_bands=n_bands);
     end
     (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene)
 end
 
-function silicon()
-    println("TODO")
+"""
+Silicon
+"""
+function silicon_PBE(; Ecut_ref=15, basis_kwargs)
+    # Defines graphene structure and hamiltonian terms
+    function model_PBE_silicon(KineticTerm;
+                               a=10.26) # Lattice constant of silicon in bohr
+        lattice = a / 2 * [[0 1 1.];
+                           [1 0 1.];
+                           [1 1 0.]]
+        Si = ElementPsp(:Si, psp=load_psp("hgh/lda/Si-q4"))
+        atoms = [Si => [ones(3)/8, -ones(3)/8]]
+        # PBE functional
+        model_name="custom"
+        (KineticTerm isa RegularizedKinetic) && (model_name="RegularizedKinetic")
+        Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name)
+    end
+
+    # Construct a plane-wave basis given a kinetic term using model_PBE_graphene
+    function basis_PBE_silicon(KineticTerm; Ecut=Ecut_ref, basis_kwargs...)
+        model = model_PBE_silicon(KineticTerm)
+        PlaneWaveBasis(model; Ecut=Ecut, basis_kwargs...)
+    end
+
+    # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
+    function scf_silicon(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref)
+        basis = basis_PBE_silicon(KineticTerm; Ecut=Ecut, basis_kwargs...)
+        self_consistent_field(basis, n_bands=n_bands);
+    end
+    (;scf=scf_graphene, basis=basis_PBE_silicon, model=model_PBE_silicon)
 end
 
 # """
