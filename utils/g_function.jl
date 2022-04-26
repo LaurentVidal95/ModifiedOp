@@ -29,24 +29,24 @@ end
 Some choices of ha functions
 """
 # Good choice is a = 1/(3.5) and ε = 1
-# ha_1(y, a, ε) = a/√(1-y^ε)
-# ha_1(y; a=1/(3.5), ε=1) = ha_1(y, a, ε)
-# dha(y, a, ε) = (a*ε*y^(ε-1))/(2√(1-y^ε)*(1-y^ε))
+ha_1(y, a, ε) = a/√(1-y^ε)
+ha_1(y; a=1/(3.5), ε=1) = ha_1(y, a, ε)
+dha(y, a, ε) = (a*ε*y^(ε-1))/(2√(1-y^ε)*(1-y^ε))
 
 # Good choice is a=0.48 and ε=0.05 ε ∈ [0, 1/2[
 Ca(a, ε) = (3/2)*(a^2)*(1-a)^(1/2 - ε)
-ha_2(y, a, ε) = Ca(a, ε)/( (1-y)^(1/2 - ε ))
+ha_2(a, ε) = y-> Ca(a, ε)/( (1-y)^(1/2 - ε ))
 
-# """
-# Find a so that gm is the closest to the x^2 curve on [0, 3/4]
-# given a function ha and ε parameter
-# """
-# function optimized_ha(ha, ε)
-#     x_axis = LinRange(0,3/4,100)
-#     f(a) = norm(gm.(x_axis, y->ha(y, a, ε)) .- map(x->x^2, x_axis))
-#     res = optimize(X->f(only(X)), [0.5], ConjugateGradient())
-#     y->ha(y, only(res.minimizer), ε)
-# end
+"""
+Find a so that gm is the closest to the x^2 curve on [0, 3/4]
+given a function ha and ε parameter
+"""
+function optimized_ha(ha, ε)
+    x_axis = LinRange(0,3/4,100)
+    f(a) = norm(gm.(x_axis, y->ha(y, a, ε)) .- map(x->x^2, x_axis))
+    res = optimize(X->f(only(X)), [0.5], ConjugateGradient())
+    y->ha(y, only(res.minimizer), ε)
+end
 
 ## Plot
 function plot_gm(ha)
