@@ -1,4 +1,5 @@
 using Pkg;
+Pkg.instantiate()
 Pkg.activate("./");
 
 using DFTK
