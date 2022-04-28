@@ -26,7 +26,7 @@ function graphene_PBE(; n_bands=13, Ecut_ref=15, basis_kwargs...)
         atoms = [C => [[0.0, 0.0, 0.0], [1//3, 2//3, 0.0]]]
         # PBE functional
         model_name="custom"
-        (KineticTerm isa RegularizedKinetic) && (model_name="RegularizedKinetic")
+        (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
         Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name)
     end
 
@@ -41,7 +41,8 @@ function graphene_PBE(; n_bands=13, Ecut_ref=15, basis_kwargs...)
         basis = basis_PBE_graphene(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
         self_consistent_field(basis, n_bands=n_bands);
     end
-    (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene)
+    (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene,
+     name="graphene_PBE")
 end
 
 """
@@ -60,7 +61,7 @@ function silicon_PBE(; n_bands=8, Ecut_ref=15, basis_kwargs...)
         atoms = [Si => [ones(3)/8, -ones(3)/8]]
         # PBE functional
         model_name="custom"
-        (KineticTerm isa RegularizedKinetic) && (model_name="RegularizedKinetic")
+        (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
         Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name)
     end
 
@@ -75,7 +76,8 @@ function silicon_PBE(; n_bands=8, Ecut_ref=15, basis_kwargs...)
         basis = basis_PBE_silicon(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
         self_consistent_field(basis, n_bands=n_bands);
     end
-    (;scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon)
+    (;scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon,
+     name="silicon_PBE")
 end
 
 # """

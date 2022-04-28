@@ -113,8 +113,8 @@ Base.eltype(::PlaneWaveBasis{T}) where {T} = T
 
 # Laurent
 function select_G_vector(model, G, k, Ecut)
-    # Strict inequality for RegularizedKinetic
-    if (model.model_name == "RegularizedKinetic")
+    # Strict inequality for ModifiedKinetic
+    if (model.model_name == "ModifiedKinetic")
         return  (sum(abs2, model.recip_lattice*(G+k))/2 < Ecut)
     end
     (sum(abs2, model.recip_lattice*(G+k))/2 ≤ Ecut)

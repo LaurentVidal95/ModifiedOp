@@ -31,14 +31,14 @@ band_derivative(εn, k_start, k_end, num_k) =
 Compute the largest variation of ∂εn and returns a kpath with "num_k_out" points
 around said variation in order to numercically zoom on it.
 """
-function kpath_near_band_irregularity(∂εn, num_k_out)
+function kpath_near_band_irregularity(∂εn, kcoords, num_k_out)
     # Compute point of larger derivative variation
     num_k_in = length(∂εn)
     jumps = [∂εn[i+1] - ∂εn[i] for i in 1:num_k_in-1]
     k_irr = findmax(jumps)[2]
     # Handle extreme points
     width_left = (k_irr<50) ? zero(Int64) : 50
-    width_right = (k_irr>num_k-50) ? zero(Int64) : 50
+    width_right = (k_irr>num_k_in-50) ? zero(Int64) : 50
     # Define starting and end point of path
     k_start = kcoords[k_irr - width_left]
     k_end = kcoords[k_irr + width_right]

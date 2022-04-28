@@ -1,5 +1,5 @@
 using Pkg;
-Pkg.activate("./"); Pkg.instantiate()
+Pkg.activate("./");
 
 using DFTK
 using Plots, Measures
