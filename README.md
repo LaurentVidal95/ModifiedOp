@@ -6,7 +6,8 @@ This code is used in [1] -> [insert arXiv link]
 # Requirements:
 Julia 1.7 with the libraries:
 - Plots, Measures, LaTeXStrings for plottings;
-- DelimitedFiles for saving data;
+- DelimitedFiles for saving data.
+
 This code is a simple top layer over a custom version of the package DFTK [insert ref] (provided in this repository).
 
 # Usage
