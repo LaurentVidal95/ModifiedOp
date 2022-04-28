@@ -1,27 +1,19 @@
-using Pkg; Pkg.activate("DFTK_modified_kinetic.jl"); using DFTK;
-using Plots, Measures
-using Unitful, UnitfulAtomic
-using DelimitedFiles
-using LaTeXStrings
-
-# Include utils dir
-include.(joinpath.(Ref("utils"), readdir("utils/")))
-
 """
 Terms
 """
 PBE_terms(KineticTerm) = [KineticTerm, AtomicLocal(), AtomicNonlocal(),
                        Ewald(), PspCorrection(), Hartree(), Xc([:gga_x_pbe, :gga_c_pbe])]
-# LDA_terms(KinteticTerm) = [KineticTerm, AtomicLocal(), AtomicNonLocal(),
-#                        Ewald(), PspCorrection(), Hartree(), Xc([:lda_xc_teter93])]
-
+LDA_terms(KinteticTerm) = [KineticTerm, AtomicLocal(), AtomicNonLocal(),
+                       Ewald(), PspCorrection(), Hartree(), Xc([:lda_xc_teter93])]
 """
 Graphene
 """
-function graphene_PBE(; Ecut_ref=15, basis_kwargs...)
+function graphene_PBE(; n_bands=13, Ecut_ref=15, basis_kwargs...)
+    # Lattice constant of graphene in bohr
+    a = austrip(1u"Å")*2.641 
+
     # Defines graphene structure and hamiltonian terms
-    function model_PBE_graphene(KineticTerm;
-                     a=austrip(1u"Å")*2.641) # Lattice constant of graphene in bohr
+    function model_PBE_graphene(KineticTerm; a=a)
         # Define lattice
         a_1 = [a; 0; 0];
         rot_120_deg = [-1/2   -√3/2   0;
@@ -39,14 +31,14 @@ function graphene_PBE(; Ecut_ref=15, basis_kwargs...)
     end
 
     # Construct a plane-wave basis given a kinetic term using model_PBE_graphene
-    function basis_PBE_graphene(KineticTerm; Ecut=Ecut_ref, basis_kwargs...)
-        model = model_PBE_graphene(KineticTerm)
+    function basis_PBE_graphene(KineticTerm; Ecut=Ecut_ref, a=a, basis_kwargs...)
+        model = model_PBE_graphene(KineticTerm, a=a)
         PlaneWaveBasis(model; Ecut=Ecut, basis_kwargs...)
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_graphene(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref)
-        basis = basis_PBE_graphene(KineticTerm; Ecut=Ecut, basis_kwargs...)
+    function scf_graphene(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a)
+        basis = basis_PBE_graphene(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
         self_consistent_field(basis, n_bands=n_bands);
     end
     (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene)
@@ -55,10 +47,12 @@ end
 """
 Silicon
 """
-function silicon_PBE(; Ecut_ref=15, basis_kwargs)
-    # Defines graphene structure and hamiltonian terms
-    function model_PBE_silicon(KineticTerm;
-                               a=10.26) # Lattice constant of silicon in bohr
+function silicon_PBE(; n_bands=8, Ecut_ref=15, basis_kwargs...)
+    # Lattice constant of silicon in bohr
+    a=10.26
+
+    # Defines silicon structure and hamiltonian terms
+    function model_PBE_silicon(KineticTerm; a=a)
         lattice = a / 2 * [[0 1 1.];
                            [1 0 1.];
                            [1 1 0.]]
@@ -70,18 +64,18 @@ function silicon_PBE(; Ecut_ref=15, basis_kwargs)
         Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name)
     end
 
-    # Construct a plane-wave basis given a kinetic term using model_PBE_graphene
-    function basis_PBE_silicon(KineticTerm; Ecut=Ecut_ref, basis_kwargs...)
-        model = model_PBE_silicon(KineticTerm)
+    # Construct a plane-wave basis given a kinetic term using model_PBE_silicon
+    function basis_PBE_silicon(KineticTerm; Ecut=Ecut_ref, a=10.26, basis_kwargs...)
+        model = model_PBE_silicon(KineticTerm, a=a)
         PlaneWaveBasis(model; Ecut=Ecut, basis_kwargs...)
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_silicon(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref)
-        basis = basis_PBE_silicon(KineticTerm; Ecut=Ecut, basis_kwargs...)
+    function scf_silicon(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref, a=10.26)
+        basis = basis_PBE_silicon(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
         self_consistent_field(basis, n_bands=n_bands);
     end
-    (;scf=scf_graphene, basis=basis_PBE_silicon, model=model_PBE_silicon)
+    (;scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon)
 end
 
 # """
