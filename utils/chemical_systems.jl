@@ -8,7 +8,9 @@ LDA_terms(KinteticTerm) = [KineticTerm, AtomicLocal(), AtomicNonLocal(),
 """
 Graphene
 """
-function graphene_PBE(; n_bands=13, Ecut_ref=15, basis_kwargs...)
+function graphene_PBE(; n_bands=13, Ecut_ref=15,
+                      temperature=1e-3, smearing=Smearing.Gaussian(),
+                      basis_kwargs...)
     # Lattice constant of graphene in bohr
     a = austrip(1u"Å")*2.641 
 
@@ -27,7 +29,8 @@ function graphene_PBE(; n_bands=13, Ecut_ref=15, basis_kwargs...)
         # PBE functional
         model_name="custom"
         (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
-        Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name)
+        Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name,
+              temperature, smearing)
     end
 
     # Construct a plane-wave basis given a kinetic term using model_PBE_graphene
@@ -48,7 +51,9 @@ end
 """
 Silicon
 """
-function silicon_PBE(; n_bands=8, Ecut_ref=15, basis_kwargs...)
+function silicon_PBE(; n_bands=8, Ecut_ref=15,
+                     temperature=1e-3, smearing=Smearing.Gaussian(),
+                     basis_kwargs...)
     # Lattice constant of silicon in bohr
     a=10.26
 
@@ -62,7 +67,8 @@ function silicon_PBE(; n_bands=8, Ecut_ref=15, basis_kwargs...)
         # PBE functional
         model_name="custom"
         (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
-        Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name)
+        Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name,
+              temperature, smearing)
     end
 
     # Construct a plane-wave basis given a kinetic term using model_PBE_silicon

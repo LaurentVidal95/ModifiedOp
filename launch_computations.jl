@@ -2,7 +2,7 @@ include("include_utils.jl")
 
 # Choose test case
 system = silicon_PBE(Ecut_ref=15)
-# system = graphene_PBE(Ecut_ref=30)
+# system = graphene_PBE(Ecut_ref=15, kshift=zeros(3))
 
 # Choose blowup function
 a = 0.4 # cste to match x^2 in [0,3/4)
@@ -19,7 +19,8 @@ n_bands = 8
 plot_data = compute_band_and_derivatives(Ecut, n_bands, blow_up_function; ref_data)
 
 ## generate and save plots
-savedir="output/$(system.name)"
+!isdir("output") && (mkdir("output")
+savedir="output/oops_$(system.name)"
 !isdir(savedir) && (mkdir(savedir))
 
 plot_gm(ha(a,ε); savedir)      # blow up function
