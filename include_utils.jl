@@ -1,5 +1,5 @@
 using Pkg;
-Pkg.instantiate()
+# Pkg.instantiate()
 Pkg.activate("./");
 
 using DFTK

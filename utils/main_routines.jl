@@ -57,3 +57,22 @@ function compute_band_and_derivatives(Ecut::T, n_bands::Int64, blow_up_function;
     # Return ref_data and mod_data
     (;std_data=(band_data_std, εn_std, ∂εn_std), mod_data=(band_data, εn, ∂εn))
 end
+
+# Work in progress to compare density of state
+# function compare_dos(plot_data; ref_data)
+#     function compute_idos(band_data)
+#         basis = band_data.basis
+#         eigenvalues = band_data.λ
+        
+#         n_spin = basis.model.n_spin_components
+#         εs = range(minimum(minimum(eigenvalues)) - .5,
+#                    maximum(maximum(eigenvalues)) + .5, length=1000)
+#         Dεs = compute_dos.(εs, Ref(basis), Ref(eigenvalues))
+#         D = []
+#         for σ in 1:n_spin
+#             push!(D, [Dσ[σ] for Dσ in Dεs])
+#         end
+#         D
+#     end
+#     compute_idos.([plot_data.std_data[1], plot_data.mod_data[1], ref_data.band_data])
+# end

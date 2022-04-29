@@ -1,13 +1,15 @@
 # Default plot parameters
 pyplot()
+myblue=RGB(95/255,133/255,255/255)
+mygreen=RGB(60/255,195/255,26/255)
 default(fontfamily="serif",
         linewidth=0.75, framestyle=:box,
         label=nothing, grid=:true,
-        linecolor=RGB(95/255,133/255,255/255),
-        titlefontsize=22,
+        linecolor=myblue,
         tickfontsize=12,
+        titlefontsize=15,
         legendfontsize=12,
-        guidefontsize=18)
+        guidefontsize=15)
 
 
 """
@@ -17,7 +19,7 @@ function plot_gm(ha; savedir="")
     x_axis = LinRange(0, 0.99, 100)
     p = plot(x_axis, abs.(gm.(x_axis, ha)), label=:none, xlims=[0,1])
     vline!([1/2,3/4], label="C^2 spline interpolation",
-           linestyle=:dash, linecolor=RGB(60/255,195/255,26/255))
+           linestyle=:dash, linecolor=mygreen)
     vline!([1], label=:none, linestyle=:dash)
     plot!(x->x^2, label="x->x^2", linestyle=:dash, linecolor=:black)
     plot!(legendfontsize=12, legend=:topleft)
@@ -35,7 +37,7 @@ function plot_M_EC(ref_data; savedir="")
     kpath = ref_data.kpath
     tmp_plot = DFTK.plot_band_data(ref_data.band_data; ref_data.scfres.εF, kpath.klabels)
     ticks = only(xticks(tmp_plot))
-    
+
     function compute_M_EC_along_path(basis)
         M_EC = [length(G_vectors(basis, kpt)) for kpt in basis.kpoints]
         mean = round(Int64, sum(M_EC) / length(M_EC))
@@ -49,14 +51,15 @@ function plot_M_EC(ref_data; savedir="")
     x_axis = LinRange(ticks[1][1], ticks[1][end], length(dist_to_mean))
     p = plot(x_axis, dist_to_mean, linewidth=1.5, label=:none)
              # markersize=6, markershape=:cross,
-             
-    xlabel!("wave vector")
-    ylabel!(L"M_{E_c}-\mathrm{mean}(M_{E_c})")
+
+    title!(split(ref_data.system.name,"_",keepempty=false)[1])
+    xlabel!(L"\mathrm{wave\; vector\;}k ")
+    ylabel!(L"M_{E_c}(k)-\mathrm{mean}(M_{E_c})")
     plot!(size=(800,500))
     xticks!(ticks...)
 
     !isempty(savedir) && (savefig(p, joinpath(savedir, "M_EC.pdf")))
-    
+
     p
 end
 
@@ -66,35 +69,44 @@ Plot bandstructures with respective standard and modified kinetic terms
 function plot_bands(plot_data; ref_data, savedir="")
     # Extract data
     ρ_ref = ref_data.scfres.ρ
+    band_data_ref = ref_data.band_data
     band_data_std = plot_data.std_data[1]
     band_data_mod = plot_data.mod_data[1]
-    
+
     kpath = ref_data.kpath
     kcoords = kpath.kcoords
     num_k = length(kcoords)
 
+    function define_ylims(data, εF)
+        y_min = findmin(data.λ)[1][1]
+        y_max = findmax([findmax(λi)[1] for λi in data.λ])[1]
+        (y_min, y_max) .- εF
+    end
+
     # Reference
-    p_ref = DFTK.plot_band_data(ref_data.band_data;
-                                ref_data.scfres.εF, kpath.klabels)
+    εF = ref_data.scfres.εF
+    p_ref = DFTK.plot_band_data(band_data_ref; εF, kpath.klabels)
+    ylims!(p_ref, define_ylims(band_data_ref, εF))
     plot!(p_ref, size=(800,500))
-    ylabel!(p_ref, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f")
+    ylabel!(p_ref, L"\varepsilon_{n,k}-\varepsilon_f\;(\mathrm{hartree})")
+    xlabel!(p_ref," ")
     title!(p_ref,"Reference band diagram")
 
     # Standard
     εF = DFTK.fermi_level(band_data_std.basis, band_data_std.λ)
-    p_std = DFTK.plot_band_data(band_data_std; εF, kpath.klabels)
+    p_std = DFTK.plot_band_data(band_data_std; εF=εF, kpath.klabels)
     plot!(p_std, size=(800,500))
-    ylims!(p_std, ylims(p_ref))
+    ylims!(p_std, define_ylims(band_data_std, εF))
     xlabel!(p_std, " ")
-    ylabel!(p_std, L"\varepsilon_{n,k}^{E_c}-\varepsilon_f")
+    ylabel!(p_std, L"\varepsilon_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
     title!(p_std,L"\mathrm{Standard\; kinetic\; term}")
 
     # Modified
     εF = DFTK.fermi_level(band_data_mod.basis, band_data_mod.λ)
     p_mod = DFTK.plot_band_data(band_data_mod; εF, kpath.klabels)
     plot!(p_mod, size=(800,500))
-    ylims!(p_mod, ylims(p_ref))
-    ylabel!(p_mod, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f")
+    ylims!(p_mod, define_ylims(band_data_mod, εF))
+    ylabel!(p_mod, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
     title!(p_mod,"Modified kinetic term")
 
     # Save plots if a directory is provided
@@ -108,22 +120,22 @@ function plot_bands(plot_data; ref_data, savedir="")
 end
 
 """
-Zoom on the largest irregularity. Plot ref, std and reg on the same plot.
+Zoom on the largest irregularity. Plot ref, std and mod on the same plot.
 BEWARE: for now mainly focus on crossings. Must find something to avoid
-focusing on crossing. Add a user defined window of searching ?
+focusing on crossing. Add a user defined search window ?
 """
-function plot_band_irregularity(n, plot_data; ref_data, num_k=500,
-                                   savedir="")
+function plot_band(n, plot_data; ref_data, num_k=500,
+                   savedir="")
     # Extract data from plot_data and ref_data
     ρ_ref = ref_data.scfres.ρ
     εn_std = plot_data.std_data[2]
     ∂εn_std = plot_data.std_data[3]
     basis_std = plot_data.std_data[1].basis
     basis_mod = plot_data.mod_data[1].basis
-    
+
     # Define k-path in the neighbourhood of largest band irregularity with "num_k" points
     kcoords_zoom = kpath_near_band_irregularity(∂εn_std[n], ref_data.kpath.kcoords, num_k)
-    
+
     # Compute bands around irregularity
     @info "Compute given band in the neighbourhood of"*
         " its biggest irregularity with $(num_k) points"
@@ -144,14 +156,14 @@ function plot_band_irregularity(n, plot_data; ref_data, num_k=500,
     plot!(p, 1:num_k, εn_zoom_std, label=latexstring("\\varepsilon_{$(n)k}^{E_c}"),
           linewidth=1.2)
     plot!(p, 1:num_k, εn_zoom_mod, label=latexstring("\\tilde{\\varepsilon}_{$(n)k}^{E_c}"),
-          linewidth=1.5, linecolor=RGB(60/255,195/255,26/255))
+          linewidth=1.2, linecolor=mygreen)
     plot!(p, size=(800,500), legend=:topright)
-    ylabel!(p, "")
+    ylabel!(p, "eigenvalues (hartree)")
     xlabel!(p, "wave vector")
     xticks!(p, :none)
 
     !isempty(savedir) && (savefig(p, joinpath(savedir, "band$(n)_zoom.pdf")))
-    
+
     p
 end
 
@@ -178,6 +190,7 @@ function plot_band_derivative(n, plot_data; ref_data, savedir="")
     xticks!(p_std, ticks...); xticks!(p_mod, ticks...);
 
     p_all = plot(p_std, p_mod, layout=(2,1))
+    contains(ref_data.system.name, "graphene") && (ylims!(p_all, (-1,1)))
 
     !isempty(savedir) && (savefig(p_all, joinpath(savedir, "band$(n)_derivative.pdf")))
 

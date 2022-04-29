@@ -37,8 +37,8 @@ function kpath_near_band_irregularity(∂εn, kcoords, num_k_out)
     jumps = [∂εn[i+1] - ∂εn[i] for i in 1:num_k_in-1]
     k_irr = findmax(jumps)[2]
     # Handle extreme points
-    width_left = (k_irr<50) ? zero(Int64) : 50
-    width_right = (k_irr>num_k_in-50) ? zero(Int64) : 50
+    width_left = (k_irr<20) ? zero(Int64) : 20
+    width_right = (k_irr>num_k_in-20) ? zero(Int64) : 20
     # Define starting and end point of path
     k_start = kcoords[k_irr - width_left]
     k_end = kcoords[k_irr + width_right]
