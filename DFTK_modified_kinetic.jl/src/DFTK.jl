@@ -4,9 +4,9 @@ with plane-wave density-functional theory algorithms.
 """
 module DFTK
 
-using Printf
-using Markdown
 using LinearAlgebra
+using Markdown
+using Printf
 using Requires
 using TimerOutputs
 using spglib_jll
@@ -19,7 +19,6 @@ export mpi_nprocs
 export mpi_master
 export setup_threading, disable_threading
 include("common/timer.jl")
-include("common/asserting.jl")
 include("common/constants.jl")
 include("common/ortho.jl")
 include("common/types.jl")
@@ -28,6 +27,7 @@ include("common/split_evenly.jl")
 include("common/mpi.jl")
 include("common/threading.jl")
 include("common/printing.jl")
+include("common/cis2pi.jl")
 
 export PspHgh
 include("pseudo/NormConservingPsp.jl")
@@ -76,7 +76,6 @@ export ModifiedKinetic
 export ExternalFromFourier
 export ExternalFromReal
 export AtomicLocal
-export PowerNonlinearity
 export LocalNonlinearity
 export Hartree
 export Xc
@@ -145,21 +144,23 @@ export guess_density
 export random_density
 export load_psp
 export list_psp
+export attach_psp
 include("guess_density.jl")
 include("pseudo/load_psp.jl")
 include("pseudo/list_psp.jl")
+include("pseudo/attach_psp.jl")
 
+export DFTKPotential
 export pymatgen_structure
 export ase_atoms
 export load_lattice
-export load_basis
-export load_model
-export load_density
 export load_atoms
+export load_positions
 export load_magnetic_moments
 export run_wannier90
+include("external/atomsbase.jl")
+include("external/interatomicpotentials.jl")
 include("external/load_from_file.jl")
-include("external/load_from_python.jl")
 include("external/ase.jl")
 include("external/pymatgen.jl")
 include("external/stubs.jl")  # Function stubs for conditionally defined methods
@@ -176,7 +177,6 @@ export compute_stresses_cart
 include("postprocess/stresses.jl")
 export compute_dos
 export compute_ldos
-export compute_nos
 export plot_dos
 include("postprocess/dos.jl")
 export compute_χ0

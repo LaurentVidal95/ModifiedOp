@@ -59,7 +59,7 @@ pyimport("ase.io").write("surface.png", surface * (3, 3, 1),
 #md # ```
 #nb # <img src="surface.png" width=500 height=500 />
 
-# Use the `load_atoms` and `load_lattice` functions
+# Use the `load_atoms`, `load_positions` and `load_lattice` functions
 # to convert to DFTK datastructures.
 # These two functions not only support importing ASE atoms into DFTK,
 # but a few more third-party datastructures as well.
@@ -68,16 +68,23 @@ pyimport("ase.io").write("surface.png", surface * (3, 3, 1),
 
 using DFTK
 
-atoms = load_atoms(surface)
-atoms = [ElementPsp(el.symbol, psp=load_psp(el.symbol, functional="pbe")) => position
-         for (el, position) in atoms]
-lattice = load_lattice(surface);
+positions = load_positions(surface)
+lattice   = load_lattice(surface)
+atoms = map(load_atoms(surface)) do el
+    if el.symbol == :Ga
+        ElementPsp(:Ga, psp=load_psp("hgh/pbe/ga-q3.hgh"))
+    elseif el.symbol == :As
+        ElementPsp(:As, psp=load_psp("hgh/pbe/as-q5.hgh"))
+    else
+        error("Unsupported element: $el")
+    end
+end;
 
 # We model this surface with (quite large a) temperature of 0.01 Hartree
 # to ease convergence. Try lowering the SCF convergence tolerance (`tol`)
 # or the `temperature` or try `mixing=KerkerMixing()`
 # to see the full challenge of this system.
-model = model_DFT(lattice, atoms, [:gga_x_pbe, :gga_c_pbe],
+model = model_DFT(lattice, atoms, positions, [:gga_x_pbe, :gga_c_pbe],
                   temperature=0.001, smearing=DFTK.Smearing.Gaussian())
 basis = PlaneWaveBasis(model; Ecut, kgrid)
 

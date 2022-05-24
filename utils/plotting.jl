@@ -120,12 +120,13 @@ function plot_bands(plot_data; ref_data, savedir="")
 end
 
 """
-Zoom on the largest irregularity. Plot ref, std and mod on the same plot.
+Focus on a single band and zoom on the largest irregularity. 
+Plot ref, std and mod on the same plot.
 BEWARE: for now mainly focus on crossings. Must find something to avoid
 focusing on crossing. Add a user defined search window ?
 """
-function plot_band(n, plot_data; ref_data, num_k=500,
-                   savedir="")
+function plot_band_irregularity(n, plot_data; ref_data, num_k=500,
+                                savedir="")
     # Extract data from plot_data and ref_data
     ρ_ref = ref_data.scfres.ρ
     εn_std = plot_data.std_data[2]
@@ -170,7 +171,7 @@ end
 """
 Compute the derivative of band number "n".
 """
-function plot_band_derivative(n, plot_data; ref_data, savedir="")
+function plot_band_derivatives(n, plot_data; ref_data, savedir="")
     # Compute ticks
     kpath = ref_data.kpath
     tmp_plot = DFTK.plot_band_data(ref_data.band_data; ref_data.scfres.εF, kpath.klabels)

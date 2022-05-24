@@ -25,12 +25,13 @@ function graphene_PBE(; n_bands=13, Ecut_ref=15,
         lattice = hcat(a_1, a_2, a_3)
         # Define elements
         C = ElementPsp(:C, psp=load_psp("hgh/pbe/c-q4"))
-        atoms = [C => [[0.0, 0.0, 0.0], [1//3, 2//3, 0.0]]]
+        atoms = [C, C]
+        positions = [[0.0, 0.0, 0.0], [1//3, 2//3, 0.0]]
         # PBE functional
         model_name="custom"
         (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
-        Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name,
-              temperature, smearing)
+        Model(lattice, atoms, positions; terms=PBE_terms(KineticTerm),
+              model_name=model_name, temperature, smearing)
     end
 
     # Construct a plane-wave basis given a kinetic term using model_PBE_graphene
@@ -51,7 +52,7 @@ end
 """
 Silicon
 """
-function silicon_PBE(; n_bands=8, Ecut_ref=15,
+function silicon_PBE(;n_bands=8, Ecut_ref=15,
                      temperature=1e-3, smearing=Smearing.Gaussian(),
                      basis_kwargs...)
     # Lattice constant of silicon in bohr
@@ -63,11 +64,13 @@ function silicon_PBE(; n_bands=8, Ecut_ref=15,
                            [1 0 1.];
                            [1 1 0.]]
         Si = ElementPsp(:Si, psp=load_psp("hgh/lda/Si-q4"))
-        atoms = [Si => [ones(3)/8, -ones(3)/8]]
+        atoms = [Si, Si]
+        positions = [ones(3)/8, -ones(3)/8]
         # PBE functional
-        model_name="custom"
-        (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
-        Model(lattice; atoms=atoms, terms=PBE_terms(KineticTerm), model_name=model_name,
+        model_name = (KineticTerm isa ModifiedKinetic) ? "ModifiedKinetic" : "custom"
+        # (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
+        Model(lattice, atoms, positions; terms=PBE_terms(KineticTerm),
+              model_name=model_name,
               temperature, smearing)
     end
 

@@ -28,7 +28,7 @@ else
 end
 
 # Setup threading in DFTK
-setup_threading()
+setup_threading(; n_blas=2)
 
 # Initialize seed
 Random.seed!(0)
@@ -51,7 +51,6 @@ Random.seed!(0)
         include("silicon_scan.jl")
         include("scf_compare.jl")
         include("iron_lda.jl")
-        include("oxygen_pbe.jl")
         include("external_potential.jl")
     end
 
@@ -62,15 +61,20 @@ Random.seed!(0)
         include("PlaneWaveBasis.jl")
         include("Model.jl")
         include("interpolation.jl")
-        include("load_psp.jl")
+        include("list_psp.jl")
         include("PspHgh.jl")
         include("elements.jl")
         include("bzmesh.jl")
         include("bzmesh_symmetry.jl")
-        include("spglib.jl")
-        include("external_pymatgen.jl")
-        include("external_ase.jl")
-        include("external_wannier90.jl")
+    end
+
+    if "all" in TAGS
+        include("external/ase.jl")
+        include("external/atomsbase.jl")
+        include("external/interatomicpotentials.jl")
+        include("external/pymatgen.jl")
+        include("external/spglib.jl")
+        include("external/wannier90.jl")
     end
 
     if "all" in TAGS

@@ -51,7 +51,7 @@ eval_psp_local_real(psp::NormConservingPsp, r::AbstractVector) =
 
 Evaluate the local part of the pseudopotential in reciprocal space:
 V(q) = ∫_R^3 Vloc(r) e^{-iqr} dr
-     = 4π ∫_{R+} sin(qr)/q r e^{-iqr} dr
+     = 4π ∫_{R+} Vloc(r) sin(qr)/q r dr
 """
 eval_psp_local_fourier(psp::NormConservingPsp, q::Real) =
     error("Not implemented")
@@ -88,6 +88,7 @@ end
 function count_n_proj(psp::NormConservingPsp)
     psp.lmax < 0 ? 0 : sum(size(psp.h[l + 1], 1) * (2l + 1) for l in 0:psp.lmax)::Int
 end
-function count_n_proj(atoms)
-    sum(count_n_proj(psp) * length(positions) for (psp, positions) in atoms)::Int
+function count_n_proj(psps, psp_positions)
+    sum(count_n_proj(psp) * length(positions)
+        for (psp, positions) in zip(psps, psp_positions))
 end
