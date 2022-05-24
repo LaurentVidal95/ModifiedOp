@@ -21,9 +21,11 @@ function plot_gm(ha; savedir="")
     vline!([1/2,3/4], label=L"C^2"*" spline interpolation",
            linestyle=:dash, linecolor=mygreen)
     vline!([1], label=:none, linestyle=:dash)
-    plot!(x->x^2, label=L"x\mapstox^2", linestyle=:dash, linecolor=:black)
+    plot!(x->x^2, label=L"x\mapsto x^2", linestyle=:dash, linecolor=:black)
     plot!(legendfontsize=12, legend=:topleft)
     plot!(size=(750,500))
+    xlabel!(L"x")
+    ylabel!(L"\mathscr{G}(x)")
     ylims!(0,10)
     !isempty(savedir) && (savefig(p, joinpath(savedir,"blow_up_function.pdf")))
     p
@@ -199,14 +201,16 @@ function plot_derivatives_wr_blow_up_rate(n, blow_up_rates; ref_data,
     p1 = plot()
     p2 = plot()
     for (iε, ε) in enumerate(blow_up_rates)
-        plot!(p1,  x_axis, datas[iε].mod_data[2],
+        plot!(p1,  x_axis[1:end-1], datas[iε].mod_data[3],
               label=latexstring("|\\cdot|^{$(ε)}"),
               linecolor=iε)
-        plot!(p2,  x_axis[1:end-1], datas[iε].mod_data[3],
+        plot!(p2,  x_axis[1:end-2], datas[iε].mod_data[4],
               label=latexstring("|\\cdot|^{$(ε)}"),
               linecolor=iε)
     end
     plot!(p1, size=(800,500)); plot!(p2, size=(800,500))
+    title!(p1, "First finite differences derivative")
+    title!(p2, "Second finite differences derivative")
     xlabel!(p2, "wave vector")
     xticks!(p2, [k_start, k_end], path_section)
     p12 = plot(p1, p2, layout=(2,1))
