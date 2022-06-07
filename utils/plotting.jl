@@ -11,7 +11,6 @@ default(fontfamily="serif",
         legendfontsize=12,
         guidefontsize=15)
 
-
 """
 Plot gm blow up function on [0,1) given third part ha.
 """
@@ -141,80 +140,47 @@ Plot band computed with the "focus_on_band" routine.
 zoom_data contains values of the band for reference, standard and modified
 kinetic term as well as the section of the path on which to plot.
 """
-function plot_band(zoom_data; ref_data, savedir="")
-    # Extract bands and derivatives
-    εn_ref = zoom_data.ref_data[2]
-    εn_std = zoom_data.std_data[2]
-    εn_mod = zoom_data.mod_data[2]
+function plot_band(band_ref, band_std, bands_mod;
+                   ref_data, savedir="",
+                   i_derivative=zero(Int64))
+    @assert (2+i_derivative ≤ length(band_ref.data)) "Order of derivative to high"
 
-    ∂εn_std = zoom_data.std_data[3]
-    ∂εn_mod = zoom_data.mod_data[3]
-    
+    # Extract bands and derivatives
+    εn_ref = band_ref.data[2+i_derivative]
+    εn_std = band_std.data[2+i_derivative]
+
     # Compute x_axis attributes
-    path_section = zoom_data.path_section
+    path_section = band_std.path_section
     num_k = length(εn_ref)
     k_start, k_end, x_axis = compute_axis_attributes(path_section, num_k, ref_data)
+    
+    # Derivative symbol
+    dev_symbl = ["", "∂", "∂^{2}"][i_derivative+1]
 
     # Plot band
-    p = plot(x_axis, εn_ref, label=latexstring("\\varepsilon_{$(n)k}"),
-             linecolor=:black, linestyle=:dash, linewidth=1.2)
-    plot!(p, x_axis, εn_std, label=latexstring("\\varepsilon_{$(n)k}^{E_c}"),
-          linewidth=1.2)
-    plot!(p, x_axis, εn_mod, label=latexstring("\\tilde{\\varepsilon}_{$(n)k}^{E_c}"),
-          linewidth=1.2, linecolor=mygreen)
+    p = plot()
+    if (i_derivative ≤ 1)
+        plot!(p, x_axis, εn_ref, label=latexstring("\\varepsilon_{$(n)k}"),
+              linecolor=:black, linestyle=:dash, linewidth=1.2)
+        plot!(p, x_axis, εn_std, label=latexstring(dev_symbl*"\\varepsilon_{$(n)k}^{E_c}"),
+              linewidth=1.2)
+    end
+    
+    for (k, band_mod) in enumerate(bands_mod)
+        εn_mod = band_mod.data[2+i_derivative]
+        blow_up_rate = extract_blow_up_rate(band_mod.data[1][1])        
+        plot!(p, x_axis, εn_mod, label=latexstring(dev_symbl*
+                     "\\tilde{\\varepsilon}_{$(n)k}^{E_c},\\; |⋅|^{$(blow_up_rate)}"),
+              linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k])
+    end
+    
     plot!(p, size=(800,500), legend=:topright)
     ylabel!(p, "eigenvalues (hartree)")
     xlabel!(p, "wave vector")
     xticks!(p, [k_start, k_end], path_section)
-
-    # Plot first derivative
-    p_std = plot(x_axis[1:end-1], ∂εn_std, label=latexstring("\\partial_k\\varepsilon_{$(n)}^{E_c}"))
-    p_mod = plot(x_axis[1:end-1], ∂εn_mod, label=latexstring("\\partial_k\\tilde{\\varepsilon}_{$(n)}^{E_c}"))
-    plot!(p_std, size=(800,500)); plot!(p_mod, size=(800,500))
-    xlabel!(p_mod, "wave vector")
-    # ylabel!(p_std, "FD derivative")
-    # ylabel!(p_mod, "FD derivative")
-    xticks!(p_mod, [k_start, k_end], path_section)
-
-    p_dev = plot(p_std, p_mod, layout=(2,1))
-
     
-    if !isempty(savedir)
-        savefig(p, joinpath(savedir, "band_$(n)_$(path_section[1])_"*
-                            "$(path_section[2]).pdf"))
-        savefig(p_dev, joinpath(savedir, "band_$(n)_derivative_"*
-                            "$(path_section[1])_$(path_section[2]).pdf"))
-    end
-    p, p_dev
-end
-
-function plot_derivatives_wr_blow_up_rate(n, blow_up_rates; ref_data,
-                                          num_k=100, path_section=ref_data.kpath.kpath[1][1:2],
-                                          savedir="")
-    # Compute bands for modified kinetic terms for all given blow_up rates
-    datas = focus_on_band.(n, blow_up_rates; ref_data, num_k, path_section, only_mod=true)
-
-    # Compute x_axis attributes
-    k_start, k_end, x_axis = compute_axis_attributes(path_section, num_k, ref_data)
-
-    # Plot
-    p1 = plot()
-    p2 = plot()
-    for (iε, ε) in enumerate(blow_up_rates)
-        plot!(p1,  x_axis[1:end-1], datas[iε].mod_data[3],
-              label=latexstring("|\\cdot|^{$(ε)}"),
-              linecolor=iε)
-        plot!(p2,  x_axis[1:end-2], datas[iε].mod_data[4],
-              label=latexstring("|\\cdot|^{$(ε)}"),
-              linecolor=iε)
-    end
-    plot!(p1, size=(800,500)); plot!(p2, size=(800,500))
-    title!(p1, "First finite differences derivative")
-    title!(p2, "Second finite differences derivative")
-    xlabel!(p2, "wave vector")
-    xticks!(p2, [k_start, k_end], path_section)
-    p12 = plot(p1, p2, layout=(2,1))
-
-    !(isempty(savedir)) && (savefig(p12, joinpath(savedir, "band_$(n)_different_blowup_rates.pdf")))
-    p12
+    !isempty(savedir) && (savefig(p,
+          joinpath(savedir, "band_$(n)_$(path_section[1])_$(path_section[2]).pdf")))
+                          
+    p
 end
