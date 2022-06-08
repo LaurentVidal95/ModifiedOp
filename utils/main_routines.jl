@@ -12,7 +12,8 @@ function reference_data(system; k_path_res=200)
 
     @info "Computing reference band structure"
     band_data = compute_bands(scfres_ref.basis, kpath.kcoords;
-                              n_bands=n_bands, ρ = scfres_ref.ρ)
+                              n_bands=n_bands, ρ = scfres_ref.ρ,
+                              tol=1e-5)
     # Computation of k path for band plot
     (;system=system, scfres=scfres_ref, kpath=kpath, band_data=band_data)
 end
@@ -25,10 +26,11 @@ Ecut is to be taken small in order to show irregularities.
 "ref_data" is the output of the previous function "reference_data".
 """
 function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_rate;
-                            ref_data) where {T<:Real}
+                            ref_data, interp_interval=[0.7, 0.75]) where {T<:Real}
     # Define blow-up function
-    blow_up_function = y->gm(y, ha(0.4, blow_up_rate))
-    
+    blow_up_function = y->gm(y, optimal_ha(blow_up_rate; interp_interval);
+                             interp_interval)
+
     @info "Compute standard and modified kinetic term bands for low Ecut = $Ecut"
     # Compute PlaneWaveBasis for given Ecut with std and modified kinetic term.
     # The global fft_grid is the same than reference in order to retain
@@ -42,13 +44,13 @@ function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_rate;
     kcoords = ref_data.kpath.kcoords
     ρ_ref = ref_data.scfres.ρ
 
-    band_data_std = compute_bands(basis_std, kcoords, n_bands=n_bands, ρ=ρ_ref)
+    # band_data_std = compute_bands(basis_std, kcoords, n_bands=n_bands, ρ=ρ_ref)
     band_data_mod = compute_bands(basis, kcoords, n_bands=n_bands, ρ=ρ_ref)
-    εn_std = n->[εnk[n] for εnk in band_data_std.λ]
-    εn_mod = n->[εnk[n] for εnk in band_data_mod.λ]
+    # εn_std = n->[εnk[n] for εnk in band_data_std.λ]
+    # εn_mod = n->[εnk[n] for εnk in band_data_mod.λ]
 
-    # Return ref_data and mod_data
-    (;std_data=(band_data_std, εn_std), mod_data=(band_data_mod, εn_mod))
+    # # Return ref_data and mod_data
+    # (;std_data=(band_data_std, εn_std), mod_data=(band_data_mod, εn_mod))
 end
 
 function extract_blow_up_rate(model)
@@ -60,14 +62,14 @@ extract_blow_up_rate(basis::PlaneWaveBasis) = extract_blow_up_rate(basis.model)
 
 function focus_on_band(n, basis_in; ref_data,
                        num_k=100, path_section=ref_data.kpath.kpath[1][1:2],
-                       only_mod=false, # only for plotting reasons
+                       tol=1e-4,
                        )
     # Compute zone to zoom on
     kpath = ref_data.kpath
     k_start_label, k_end_label = path_section
     blow_up_rate = extract_blow_up_rate(basis_in)
-    @info "Focusing on band $n between $(k_start_label) and $(k_end_label) with $(num_k) points.\n"*
-        "Blow-up rate: $(blow_up_rate)"
+    @info "Focusing on band $n between $(k_start_label) and $(k_end_label) with "*
+          "$(num_k) points.\n"*"Blow-up rate: $(blow_up_rate)"
 
     # Pre-computations
     kcoords = generate_kpath(kpath.klabels[k_start_label], kpath.klabels[k_end_label], num_k)
@@ -75,7 +77,7 @@ function focus_on_band(n, basis_in; ref_data,
 
     # Compute band with higher accuracy between two band diagram points
     # modified kinetic term
-    band_data = compute_bands(basis_in, kcoords, n_bands=n, ρ=ρ_ref)
+    band_data = compute_bands(basis_in, kcoords, n_bands=n, ρ=ρ_ref, tol=tol)
     εn = [εnk[n] for εnk in band_data.λ]
     ∂εn = band_derivative(εn, kpath.kcoords)
     ∂2εn = band_derivative(∂εn, kpath.kcoords)

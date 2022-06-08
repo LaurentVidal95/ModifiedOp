@@ -14,19 +14,30 @@ default(fontfamily="serif",
 """
 Plot gm blow up function on [0,1) given third part ha.
 """
-function plot_gm(ha; savedir="")
-    x_axis = LinRange(0, 0.99, 100)
-    p = plot(x_axis, abs.(gm.(x_axis, ha)), label=:none, xlims=[0,1])
-    vline!([1/2,3/4], label=L"C^2"*" spline interpolation",
+function plot_gm(blow_up_rate; interp_interval=[0.7, 0.75], savedir="")    
+    x_axis = LinRange(0, 0.99, 1000)
+
+    # Plot
+    p = plot(x_axis, abs.(gm.(x_axis, optimal_ha(blow_up_rate; interp_interval);
+                              interp_interval)),
+             label=:none, xlims=[0,1])
+    
+    vline!(interp_interval, label=L"C^2"*" spline interpolation",
            linestyle=:dash, linecolor=mygreen)
-    vline!([1], label=:none, linestyle=:dash)
+    vline!([1], label=:none)
     plot!(x->x^2, label=L"x\mapsto x^2", linestyle=:dash, linecolor=:black)
+
+    # Plot parameters
     plot!(legendfontsize=12, legend=:topleft)
     plot!(size=(750,500))
     xlabel!(L"x")
     ylabel!(L"\mathscr{G}(x)")
-    ylims!(0,10)
+    title!("Blow up rate: "*latexstring("|\\cdot|^{$(blow_up_rate)}"))
+    ylims!(0,5)
+
+    # Save plot if needed
     !isempty(savedir) && (savefig(p, joinpath(savedir,"blow_up_function.pdf")))
+
     p
 end
 
@@ -159,28 +170,34 @@ function plot_band(band_ref, band_std, bands_mod;
 
     # Plot band
     p = plot()
-    if (i_derivative ≤ 1)
-        plot!(p, x_axis, εn_ref, label=latexstring("\\varepsilon_{$(n)k}"),
-              linecolor=:black, linestyle=:dash, linewidth=1.2)
-        plot!(p, x_axis, εn_std, label=latexstring(dev_symbl*"\\varepsilon_{$(n)k}^{E_c}"),
-              linewidth=1.2)
-    end
+    (i_derivative == 0) && (plot!(p, x_axis, εn_ref,
+                                  label=latexstring("\\varepsilon_{$(n)k}"),
+                                  linecolor=:black, linestyle=:dash, linewidth=1.2,
+                                  # markershape=:auto, markercolor=:match))
+                                  )
+                            )
+    (i_derivative ≤ 1) && (plot!(p, x_axis, εn_std,
+                                 label=latexstring(dev_symbl*"\\varepsilon_{$(n)k}^{E_c}"),
+                                 linewidth=1.2)#, markershape=:auto, markercolor=:match)
+                           )
     
     for (k, band_mod) in enumerate(bands_mod)
         εn_mod = band_mod.data[2+i_derivative]
-        blow_up_rate = extract_blow_up_rate(band_mod.data[1][1])        
+        blow_up_rate = extract_blow_up_rate(band_mod.data[1][1])
         plot!(p, x_axis, εn_mod, label=latexstring(dev_symbl*
                      "\\tilde{\\varepsilon}_{$(n)k}^{E_c},\\; |⋅|^{$(blow_up_rate)}"),
-              linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k])
+              linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k],
+              # markershape=:auto, markercolor=:match)
+              )
     end
     
-    plot!(p, size=(800,500), legend=:topright)
+    plot!(p, size=(800,500), legend=:bottomleft)
     ylabel!(p, "eigenvalues (hartree)")
     xlabel!(p, "wave vector")
     xticks!(p, [k_start, k_end], path_section)
-    
     !isempty(savedir) && (savefig(p,
-          joinpath(savedir, "band_$(n)_$(path_section[1])_$(path_section[2]).pdf")))
-                          
+                           joinpath(savedir, "band_$(n)_dev_$(i_derivative)_"*
+                                    "$(path_section[1])_$(path_section[2]).pdf"))
+                          )                          
     p
 end
