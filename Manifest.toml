@@ -596,10 +596,16 @@ uuid = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 version = "0.19.2"
 
 [[deps.MPICH_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "9f781ffc4020c24ca05d83fa4eb4df0d34832b18"
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "MPIPreferences", "Pkg", "TOML"]
+git-tree-sha1 = "089ec72dbf7d7a853626f438d140d0a642ddbda4"
 uuid = "7cb0a576-ebde-5e09-9194-50597f1243b4"
-version = "4.0.2+1"
+version = "4.0.2+4"
+
+[[deps.MPIPreferences]]
+deps = ["Libdl", "Preferences"]
+git-tree-sha1 = "49f10d34284610c125421c7a4e6f913e4bc00897"
+uuid = "3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"
+version = "0.1.3"
 
 [[deps.MacroTools]]
 deps = ["Markdown", "Random"]
@@ -697,10 +703,10 @@ deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
 
 [[deps.OpenMPI_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
-git-tree-sha1 = "19ec7d0311aa5fb5fe537dc6eeaec86942b64caf"
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "MPIPreferences", "Pkg", "TOML"]
+git-tree-sha1 = "6198c6dc3b5c3dc01854879197a5f382a60f947d"
 uuid = "fe0851c0-eecd-5654-98d4-656369965a5c"
-version = "4.1.3+0"
+version = "4.1.3+1"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]

@@ -14,17 +14,16 @@ default(fontfamily="serif",
 """
 Plot gm blow up function on [0,1) given third part ha.
 """
-function plot_gm(blow_up_rate; interp_interval=[0.7, 0.75], savedir="")    
-    x_axis = LinRange(0, 0.99, 1000)
+function plot_blow_up_function(blow_up_function; savedir="")    
+    x_axis = LinRange(0, 0.99, 10000)
+    blow_up_rate = blow_up_function.g3.ε
 
     # Plot
-    p = plot(x_axis, abs.(gm.(x_axis, optimal_ha(blow_up_rate; interp_interval);
-                              interp_interval)),
-             label=:none, xlims=[0,1])
+    p = plot(x_axis, blow_up_function.(x_axis), label=:none, xlims=[0,1])
     
-    vline!(interp_interval, label=L"C^2"*" spline interpolation",
+    vline!(blow_up_function.interval, label=L"C^2"*" polynomial interpolation",
            linestyle=:dash, linecolor=mygreen)
-    vline!([1], label=:none)
+    vline!([1], label=:none, linecolor=:black)
     plot!(x->x^2, label=L"x\mapsto x^2", linestyle=:dash, linecolor=:black)
 
     # Plot parameters
@@ -97,6 +96,7 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
 
     # Reference
     εF = ref_data.scfres.εF
+    λ_ref = [λk .- εF for λk in band_data_ref.λ]
     p_ref = DFTK.plot_band_data(band_data_ref; εF, kpath.klabels)
     ylims!(p_ref, define_ylims(band_data_ref, εF))
     plot!(p_ref, size=(800,500))
@@ -106,6 +106,7 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
 
     # Standard
     εF = DFTK.fermi_level(band_data_std.basis, band_data_std.λ)
+    λ_std = [λk .- εF for λk in band_data_std.λ]
     p_std = DFTK.plot_band_data(band_data_std; εF=εF, kpath.klabels)
     plot!(p_std, size=(800,500))
     ylims!(p_std, define_ylims(band_data_std, εF))
@@ -115,20 +116,39 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
 
     # Modified
     εF = DFTK.fermi_level(band_data_mod.basis, band_data_mod.λ)
+    λ_mod = [λk .- εF for λk in band_data_mod.λ]
     p_mod = DFTK.plot_band_data(band_data_mod; εF, kpath.klabels)
     plot!(p_mod, size=(800,500))
     ylims!(p_mod, define_ylims(band_data_mod, εF))
     ylabel!(p_mod, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
     title!(p_mod,"Modified kinetic term")
 
+    # Error plot
+    num_bands = length(λ_ref[1])
+    err_std = norm.(λ_ref - λ_std, 1) ./ num_bands
+    err_mod = norm.(λ_ref - λ_mod, 1) ./ num_bands
+    ticks=only(xticks(p_mod))
+    x_axis = LinRange(ticks[1][1], ticks[1][end], length(λ_ref))
+    p_err = plot(x_axis, err_std,
+                 label=L"\varepsilon_{n,k}^{E_c}",
+                 linecolor=myblue)
+    plot!(p_err, x_axis, err_mod,
+          label=L"\tilde{\varepsilon}_{n,k}^{E_c}",
+          linecolor=mygreen)
+    plot!(p_err, size=(800,500))
+    xticks!(ticks...)
+    xlabel!(L"\mathrm{wave\; vector\;}k ")
+    ylabel!("Mean absolute deviation (hartree)")
+          
     # Save plots if a directory is provided
     if !isempty(savedir)
         savefig(p_ref, joinpath(savedir, "band_plot_ref.pdf"))
         savefig(p_std, joinpath(savedir, "band_plot_std.pdf"))
         savefig(p_mod, joinpath(savedir, "band_plot_mod.pdf"))
+        savefig(p_err, joinpath(savedir, "band_plot_errors.pdf"))
     end
 
-    p_ref, p_std, p_mod
+    p_ref, p_std, p_mod, p_err
 end
 
 function compute_axis_attributes(path_section, num_k, ref_data)
@@ -199,5 +219,5 @@ function plot_band(band_ref, band_std, bands_mod;
                            joinpath(savedir, "band_$(n)_dev_$(i_derivative)_"*
                                     "$(path_section[1])_$(path_section[2]).pdf"))
                           )                          
-    p
+    p, (x_axis, k_start, k_end)
 end

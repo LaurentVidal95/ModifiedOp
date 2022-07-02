@@ -1,29 +1,51 @@
 using ForwardDiff
 using Optim
 
-"""
-  Connects the x->x^2 and the ha part of the g function so that g have C^2 regularity
-"""
-function gm_C2_spline_interpolation(ha; interp_interval=[0.7, 0.75])
-    y1, y2 = interp_interval
-    z1, z2 = y1^2, ha(y2)
-    # Compute independant part of the spline
-    t(y) = (y-y1)/(y2-y1);
-    t1 = 2*y1*(y2-y1) - (z2-z1)
-    t2 = -ForwardDiff.derivative(ha, y2)*(y2-y1) + (z2-z1)
-    # Assemble linear part + derivative part
-    y -> (1-t(y))*z1 + t(y)*z2 + t(y)*(1-t(y))*( (1-t(y))*t1 + t(y)*t2 )
+function C2_pol_interpolation(ha; interval=[0.5, 0.75])
+    # ForwardDiff second derivative of ha
+    dha(x) = ForwardDiff.derivative(ha, x)
+    d2ha(x) = ForwardDiff.derivative(dha, x)
+
+    # Points of interpolation
+    a, b = interval
+    x1, x2 = a^2, ha(b)
+    y1, y2 = 2*a, dha(b)
+    z1, z2 = 2, d2ha(b)
+
+    # Solve interpolation linear system
+    A = [1 a a^2  a^3   a^4    a^5;
+         1 b b^2  b^3   b^4    b^5;
+         0 1 2*a  3*a^2 4*a^3  5*a^4;
+         0 1 2*b  3*b^2 4*b^3  5*b^4;
+         0 0 2    6*a   12*a^2 20*a^3;
+         0 0 2    6*b   12*b^2 20*b^3]
+    B = [x1, x2, y1, y2, z1, z2]                      
+    C = A\B
+
+    # Assemble polynomial
+    x -> C'*((x * ones(6)) .^(0:5))
 end
 
-function gm(y, ha; interp_interval=[0.7, 0.75])
-    y1, y2 = interp_interval
+function gm(x, g1, g2, g3; interval=[0.5, 0.75])
+    x1, x2 = interval
     # Define 3 parts of the function
-    g1 = y->y'y; g2 = gm_C2_spline_interpolation(ha; interp_interval); g3 = y->ha(y)
-    (0 ≤ y < y1)   && (return g1(y))
-    (y1 ≤ y < y2)  && (return g2(y))
-    (y2 ≤ y < 1)   && (return g3(y))
+    (0 ≤ x < x1)   && (return g1(x))
+    (x1 ≤ x < x2)  && (return g2(x))
+    (x2 ≤ x < 1)   && (return g3(x))
     error("The regularization g function is defined on [0,1). Did you devide by √Ecut ?")
     nothing
+end
+function gm(g3; interval=[0.5, 0.75])
+    g2 = C2_pol_interpolation(g3; interval)
+    g1 = x->x'x
+    x->gm(x, g1, g2, g3; interval)
+end
+function gm(blow_up_rate::T; interval=[0.5, 0.75]) where {T<:Real}
+    C = 0.6
+    (blow_up_rate==-3//2) && (C=0.06)
+    (blow_up_rate==-5//2) && (C=0.02)
+    g3 = ha(C, blow_up_rate)
+    gm(g3; interval)
 end
 
 """
@@ -31,23 +53,15 @@ Blow up part of gm. Good choice is a=0.48 and ε=-1.
 ε gives the blow up rate of gm.
 """
 Ca(a, ε) = (3/2)*(a^2)*(1-a)^(1/2 - ε)
-ha(a, ε) = y-> Ca(a, ε)/( (1-y)^(1/2 - ε ))
+ha(a, ε) = y-> Ca(a, ε)/( (1-y)^(1/2 - ε) )
 
-function optimal_ha(blow_up_rate; interp_interval=[0.7, 0.75])
-    y1, y2 = interp_interval
-    x_axis = LinRange(y1, y2, 1000)
-    function F(a)
-        !(-1 ≤ a[1] ≤ 1) && (return abs(a[1])*1e6)        
-        norm(gm.(x_axis, ha(a[1], blow_up_rate); interp_interval) .- (x_axis .^2))
-    end
-    a_opti = only(optimize(F, [0.3], LBFGS()).minimizer)
-    ha(a_opti, blow_up_rate)
-end
-
-"""
-Old ha with blow up |⋅|^{-1/2}
-"""
-# Good choice is a = 1/(3.5) and ε = 1
-# ha_1(y, a, ε) = a/√(1-y^ε)
-# ha_1(y; a=1/(3.5), ε=1) = ha_1(y, a, ε)
-# dha(y, a, ε) = (a*ε*y^(ε-1))/(2√(1-y^ε)*(1-y^ε))
+# function optimal_ha(blow_up_rate; interval=[0.5, 0.75])
+#     x1, x2 = interval
+#     x_axis = LinRange(x1, x2, 1000)
+#     function F(a)
+#         !(-1 ≤ a[1] ≤ 1) && (return abs(a[1])*1e6)
+#         norm(gm(ha(a[1], blow_up_rate); interval).(x_axis) .- (x_axis .^2))
+#     end
+#     a_opti = only(optimize(F, [0.3], LBFGS()).minimizer)
+#     ha(a_opti, blow_up_rate)
+# end

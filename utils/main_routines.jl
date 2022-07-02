@@ -25,11 +25,8 @@ gm.
 Ecut is to be taken small in order to show irregularities.
 "ref_data" is the output of the previous function "reference_data".
 """
-function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_rate;
-                            ref_data, interp_interval=[0.7, 0.75]) where {T<:Real}
-    # Define blow-up function
-    blow_up_function = y->gm(y, optimal_ha(blow_up_rate; interp_interval);
-                             interp_interval)
+function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_function;
+                            ref_data, interval=[0.7, 0.75]) where {T<:Real}
 
     @info "Compute standard and modified kinetic term bands for low Ecut = $Ecut"
     # Compute PlaneWaveBasis for given Ecut with std and modified kinetic term.
@@ -44,18 +41,18 @@ function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_rate;
     kcoords = ref_data.kpath.kcoords
     ρ_ref = ref_data.scfres.ρ
 
-    # band_data_std = compute_bands(basis_std, kcoords, n_bands=n_bands, ρ=ρ_ref)
+    band_data_std = compute_bands(basis_std, kcoords, n_bands=n_bands, ρ=ρ_ref)
     band_data_mod = compute_bands(basis, kcoords, n_bands=n_bands, ρ=ρ_ref)
-    # εn_std = n->[εnk[n] for εnk in band_data_std.λ]
-    # εn_mod = n->[εnk[n] for εnk in band_data_mod.λ]
+    εn_std = n->[εnk[n] for εnk in band_data_std.λ]
+    εn_mod = n->[εnk[n] for εnk in band_data_mod.λ]
 
-    # # Return ref_data and mod_data
-    # (;std_data=(band_data_std, εn_std), mod_data=(band_data_mod, εn_mod))
+    # Return ref_data and mod_data
+    (;std_data=(band_data_std, εn_std), mod_data=(band_data_mod, εn_mod))
 end
 
 function extract_blow_up_rate(model)
     (model.model_name=="ModifiedKinetic") &&
-        (return model.term_types[1].blow_up_function.blow_up_rate)
+        (return model.term_types[1].blow_up_function.g3.ε)
     NaN
 end
 extract_blow_up_rate(basis::PlaneWaveBasis) = extract_blow_up_rate(basis.model)
