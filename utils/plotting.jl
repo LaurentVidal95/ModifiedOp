@@ -173,7 +173,8 @@ kinetic term as well as the section of the path on which to plot.
 """
 function plot_band(band_ref, band_std, bands_mod;
                    ref_data, savedir="",
-                   i_derivative=zero(Int64))
+                   i_derivative=zero(Int64),
+                   )
     @assert (2+i_derivative ≤ length(band_ref.data)) "Order of derivative to high"
 
     # Extract bands and derivatives
@@ -187,7 +188,7 @@ function plot_band(band_ref, band_std, bands_mod;
     
     # Derivative symbol
     dev_symbl = ["", "∂", "∂^{2}"][i_derivative+1]
-
+    
     # Plot band
     p = plot()
     (i_derivative == 0) && (plot!(p, x_axis, εn_ref,
@@ -197,14 +198,19 @@ function plot_band(band_ref, band_std, bands_mod;
                                   )
                             )
     (i_derivative ≤ 1) && (plot!(p, x_axis, εn_std,
-                                 label=latexstring(dev_symbl*"\\varepsilon_{$(n)k}^{E_c}"),
+                                 label=latexstring(dev_symbl*"\\varepsilon_{$(n)\\mathbf{k}}^{E_c}"),
                                  linewidth=1.2)#, markershape=:auto, markercolor=:match)
                            )
-    
+    subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
     for (k, band_mod) in enumerate(bands_mod)
         εn_mod = band_mod.data[2+i_derivative]
         blow_up_rate = extract_blow_up_rate(band_mod.data[1][1])
-        plot!(p, x_axis, εn_mod, label=latexstring(dev_symbl*
+
+        # Avoid numerical instabilities due to FD derivative computation
+        debug = div(length(εn_ref), length(εn_mod))
+        x_axis_tmp = subset(x_axis, debug)
+
+        plot!(p, x_axis_tmp, εn_mod, label=latexstring(dev_symbl*
                      "\\tilde{\\varepsilon}_{$(n)k}^{E_c},\\; |⋅|^{$(blow_up_rate)}"),
               linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k],
               # markershape=:auto, markercolor=:match)

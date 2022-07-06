@@ -60,7 +60,8 @@ extract_blow_up_rate(basis::PlaneWaveBasis) = extract_blow_up_rate(basis.model)
 function focus_on_band(n, basis_in; ref_data,
                        num_k=100, path_section=ref_data.kpath.kpath[1][1:2],
                        tol=1e-4,
-                       )
+                       maxiter=200,
+                       debug=5)
     # Compute zone to zoom on
     kpath = ref_data.kpath
     k_start_label, k_end_label = path_section
@@ -74,10 +75,14 @@ function focus_on_band(n, basis_in; ref_data,
 
     # Compute band with higher accuracy between two band diagram points
     # modified kinetic term
-    band_data = compute_bands(basis_in, kcoords, n_bands=n, ρ=ρ_ref, tol=tol)
+    band_data = compute_bands(basis_in, kcoords, n_bands=n, ρ=ρ_ref, tol=tol, maxiter=maxiter)
     εn = [εnk[n] for εnk in band_data.λ]
-    ∂εn = band_derivative(εn, kpath.kcoords)
-    ∂2εn = band_derivative(∂εn, kpath.kcoords)
+
+    # Plot finite diff derivatives
+    subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
+    tmp_εn, tmp_kcoords = subset.((εn, kpath.kcoords), Ref(debug))
+    ∂εn = band_derivative(tmp_εn, tmp_kcoords)
+    ∂2εn = band_derivative(∂εn, tmp_kcoords)
 
     (;path_section, data=(band_data, εn, ∂εn, ∂2εn))
 end
@@ -89,53 +94,6 @@ function plot_dos_perso(data)
     εF = DFTK.fermi_level(basis, eigenvalues)
     plot_dos(basis, eigenvalues; εF)
 end
-
-
-# function focus_on_band(n, blow_up_rate, basis; ref_data,
-#                        num_k=100, path_section=ref_data.kpath.kpath[1][1:2],
-#                        only_mod=false, # only for plotting reasons
-#                        )
-#     # Define blow-up function
-#     blow_up_function = y->gm(y, ha(0.4, blow_up_rate))
-
-#     # Compute zone to zoom on
-#     kpath = ref_data.kpath
-#     k_start_label, k_end_label = path_section
-#     @info "Focusing on band $n between $(k_start_label) and $(k_end_label) with $(num_k) points.\n"*
-#         "Blow-up rate: $(blow_up_rate)"
-
-#     # Pre-computations
-#     kcoords = generate_kpath(kpath.klabels[k_start_label], kpath.klabels[k_end_label], num_k)
-#     ρ_ref = ref_data.scfres.ρ
-#     ref_fft_size = ref_data.scfres.basis.fft_size
-
-#     # Compute band with higher accuracy between two band diagram points
-#     # modified kinetic term
-#     basis_mod = ref_data.system.basis(ModifiedKinetic(blow_up=blow_up_function), Ecut=Ecut,
-#                                   fft_size=ref_fft_size)
-#     band_data_mod = compute_bands(basis_mod, kcoords, n_bands=n, ρ=ρ_ref)
-#     εn_mod = [εnk[n] for εnk in band_data_mod.λ]
-#     ∂εn_mod = band_derivative(εn_mod, kpath.kcoords)
-#     ∂2εn_mod = band_derivative(∂εn_mod, kpath.kcoords)
-
-#     (only_mod) && (return (;path_section,
-#                            mod_data=(band_data_mod, εn_mod, ∂εn_mod, ∂2εn_mod)))
-    
-#     # reference and standard
-#     basis_std = ref_data.system.basis(Kinetic(), Ecut=Ecut, fft_size=ref_fft_size)
-#     band_data_ref = compute_bands(ref_data.scfres.basis, kcoords, n_bands=n, ρ=ρ_ref)
-#     band_data_std = compute_bands(basis_std, kcoords, n_bands=n, ρ=ρ_ref)
-#     εn_ref = [εnk[n] for εnk in band_data_ref.λ]
-#     εn_std = [εnk[n] for εnk in band_data_std.λ]
-#     ∂εn_std = band_derivative(εn_std, kpath.kcoords)
-#     ∂2εn_std = band_derivative(∂εn_std, kpath.kcoords)
-
-#     (;path_section,
-#      ref_data=(band_data_ref, εn_ref),
-#      std_data=(band_data_std, εn_std, ∂εn_std, ∂2εn_std),
-#      mod_data=(band_data_mod, εn_mod, ∂εn_mod, ∂2εn_mod))
-# end
-
 
 # # Interpolate the reference density in the current fft_grid
 # # Use only if fft_size of basis and basis_std is different from basis_ref.fft_size

@@ -40,10 +40,25 @@ function gm(g3; interval=[0.5, 0.75])
     g1 = x->x'x
     x->gm(x, g1, g2, g3; interval)
 end
+"""
+Some tests parameters:
+For [0.92, 0.95]:
+C = 0.6 
+    (blow_up_rate==-3//2) && (C=0.06) 
+    (blow_up_rate==-5//2) && (C=0.02) 
+For [0.97, 0.98]
+C = 0.2
+    (blow_up_rate==-3//2) && (C= 0.03)
+    (blow_up_rate==-5//2) && (C=0.003)
+For [0.85, 0.9]
+C = 0.3
+    (blow_up_rate==-3//2) && (C=0.1)
+    (blow_up_rate==-5//2) && (C=0.04)
+"""
 function gm(blow_up_rate::T; interval=[0.5, 0.75]) where {T<:Real}
-    C = 0.6
-    (blow_up_rate==-3//2) && (C=0.06)
-    (blow_up_rate==-5//2) && (C=0.02)
+    C = 0.2
+    (blow_up_rate==-3//2) && (C=0.02)
+    (blow_up_rate==-5//2) && (C=0.003)
     g3 = ha(C, blow_up_rate)
     gm(g3; interval)
 end
@@ -54,14 +69,3 @@ Blow up part of gm. Good choice is a=0.48 and ε=-1.
 """
 Ca(a, ε) = (3/2)*(a^2)*(1-a)^(1/2 - ε)
 ha(a, ε) = y-> Ca(a, ε)/( (1-y)^(1/2 - ε) )
-
-# function optimal_ha(blow_up_rate; interval=[0.5, 0.75])
-#     x1, x2 = interval
-#     x_axis = LinRange(x1, x2, 1000)
-#     function F(a)
-#         !(-1 ≤ a[1] ≤ 1) && (return abs(a[1])*1e6)
-#         norm(gm(ha(a[1], blow_up_rate); interval).(x_axis) .- (x_axis .^2))
-#     end
-#     a_opti = only(optimize(F, [0.3], LBFGS()).minimizer)
-#     ha(a_opti, blow_up_rate)
-# end
