@@ -1,5 +1,24 @@
-using JSON3
+"""
+Generate k-points cartesian coordinates given starting point, end point,
+and the number of wanted k-points.
+"""
+function generate_kpath(k_start, k_end, num_k)
+    [SVector{3,Float64}(kcoord) for kcoord in
+               map(x-> (1-x)*k_start .+ x*k_end, LinRange(0, 1, num_k))]    
+end
 
+"""
+Compute finite difference derivative of the band εn.
+εn is the vector of eigenvalues for each k-points.
+"""
+function band_derivative(εn::Vector{T}, kcoords) where {T<:Real}
+    @show δk = norm(kcoords[2] .- kcoords[1],1)
+    [(εn[i+1]-εn[i])/δk for i in 1:length(εn)-1]
+end
+
+"""
+
+"""
 function save_band_data(band_data, file::String)
     @assert !(isfile(file)) "$(file) already exists" 
 
@@ -16,6 +35,9 @@ function save_band_data(band_data, file::String)
     nothing
 end
 
+"""
+
+"""
 function read_band_data(file)
     data_in = open(JSON3.read, file)
     (; path_section=data_in["path_section"],

@@ -1,6 +1,3 @@
-using ForwardDiff
-using Optim
-
 function C2_pol_interpolation(ha; interval=[0.5, 0.75])
     # ForwardDiff second derivative of ha
     dha(x) = ForwardDiff.derivative(ha, x)
@@ -56,9 +53,9 @@ C = 0.3
     (blow_up_rate==-5//2) && (C=0.04)
 """
 function gm(blow_up_rate::T; interval=[0.5, 0.75]) where {T<:Real}
-    C = 0.2
-    (blow_up_rate==-3//2) && (C=0.02)
-    (blow_up_rate==-5//2) && (C=0.003)
+    C = 0.3
+    (blow_up_rate==-3//2) && (C=0.1)
+    (blow_up_rate==-5//2) && (C=0.04)
     g3 = ha(C, blow_up_rate)
     gm(g3; interval)
 end

@@ -7,9 +7,9 @@ default(fontfamily="serif",
         label=nothing, grid=:true,
         linecolor=myblue,
         tickfontsize=12,
-        titlefontsize=15,
+        titlefontsize=12,
         legendfontsize=12,
-        guidefontsize=15)
+        guidefontsize=12)
 
 """
 Plot gm blow up function on [0,1) given third part ha.
@@ -64,9 +64,9 @@ function plot_M_EC(ref_data; savedir="")
              # markersize=6, markershape=:cross,
 
     title!(split(ref_data.system.name,"_",keepempty=false)[1])
-    xlabel!(L"\mathrm{wave\; vector\;}k ")
+    xlabel!(L"\mathrm{wave\; vector\;}\mathbf{k} ")
     ylabel!(L"M_{E_c}(k)-\mathrm{mean}(M_{E_c})")
-    plot!(size=(800,500))
+    plot!(size=(500,500))
     xticks!(ticks...)
 
     !isempty(savedir) && (savefig(p, joinpath(savedir, "M_EC.pdf")))
@@ -188,38 +188,42 @@ function plot_band(band_ref, band_std, bands_mod;
     
     # Derivative symbol
     dev_symbl = ["", "∂", "∂^{2}"][i_derivative+1]
-    
-    # Plot band
+
+    # Plots
     p = plot()
+    # Reference band
     (i_derivative == 0) && (plot!(p, x_axis, εn_ref,
-                                  label=latexstring("\\varepsilon_{$(n)k}"),
+                                  label=latexstring("\\varepsilon_{$(n)\\mathbf{k}}"),
                                   linecolor=:black, linestyle=:dash, linewidth=1.2,
                                   # markershape=:auto, markercolor=:match))
                                   )
                             )
+    # Standard band
     (i_derivative ≤ 1) && (plot!(p, x_axis, εn_std,
                                  label=latexstring(dev_symbl*"\\varepsilon_{$(n)\\mathbf{k}}^{E_c}"),
                                  linewidth=1.2)#, markershape=:auto, markercolor=:match)
                            )
+    # Modified band
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
     for (k, band_mod) in enumerate(bands_mod)
         εn_mod = band_mod.data[2+i_derivative]
-        blow_up_rate = extract_blow_up_rate(band_mod.data[1][1])
+        blow_up_rate = [-1/2, -3/2, -5/2][k]#extract_blow_up_rate(band_mod.data[1][1])
 
         # Avoid numerical instabilities due to FD derivative computation
         debug = div(length(εn_ref), length(εn_mod))
         x_axis_tmp = subset(x_axis, debug)
 
         plot!(p, x_axis_tmp, εn_mod, label=latexstring(dev_symbl*
-                     "\\tilde{\\varepsilon}_{$(n)k}^{E_c},\\; |⋅|^{$(blow_up_rate)}"),
+                     "\\tilde{\\varepsilon}_{$(n)\\mathbf{k}}^{E_c},\\; |⋅|^{$(blow_up_rate)}"),
               linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k],
               # markershape=:auto, markercolor=:match)
               )
     end
-    
-    plot!(p, size=(800,500), legend=:bottomleft)
+
+    # Plot args
+    plot!(p, size=(500,500), legend=:bottomleft)
     ylabel!(p, "eigenvalues (hartree)")
-    xlabel!(p, "wave vector")
+    xlabel!(p, "wave vector "*L"\mathbf{k}")
     xticks!(p, [k_start, k_end], path_section)
     !isempty(savedir) && (savefig(p,
                            joinpath(savedir, "band_$(n)_dev_$(i_derivative)_"*

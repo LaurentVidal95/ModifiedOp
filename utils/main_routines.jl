@@ -79,6 +79,7 @@ function focus_on_band(n, basis_in; ref_data,
     εn = [εnk[n] for εnk in band_data.λ]
 
     # Plot finite diff derivatives
+    # Put in plot directly...
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
     tmp_εn, tmp_kcoords = subset.((εn, kpath.kcoords), Ref(debug))
     ∂εn = band_derivative(tmp_εn, tmp_kcoords)
@@ -102,19 +103,19 @@ end
 # ρ_ref = add_dim(DFTK.interpolate_density(ref_data.scfres.ρ[:,:,:,1],
 #                                          ref_data.scfres.basis, basis))
 
-# function compare_dos(plot_data; ref_data)
-#     function compute_idos(band_data)
-#         basis = band_data.basis
-#         eigenvalues = band_data.λ        
-#         n_spin = basis.model.n_spin_components
-#         εs = range(minimum(minimum(eigenvalues)) - .5,
-#                    maximum(maximum(eigenvalues)) + .5, length=1000)
-#         Dεs = compute_dos.(εs, Ref(basis), Ref(eigenvalues))
-#         D = []
-#         for σ in 1:n_spin
-#             push!(D, [Dσ[σ] for Dσ in Dεs])
-#         end
-#         D
-#     end
-#     compute_idos.([plot_data.std_data[1], plot_data.mod_data[1], ref_data.band_data])
-# end
+function compare_dos(plot_data; ref_data)
+    function compute_idos(band_data)
+        basis = band_data.basis
+        eigenvalues = band_data.λ        
+        n_spin = basis.model.n_spin_components
+        εs = range(minimum(minimum(eigenvalues)) - .5,
+                   maximum(maximum(eigenvalues)) + .5, length=1000)
+        Dεs = compute_dos.(εs, Ref(basis), Ref(eigenvalues))
+        D = []
+        for σ in 1:n_spin
+            push!(D, [Dσ[σ] for Dσ in Dεs])
+        end
+        D
+    end
+    compute_idos.([plot_data.std_data[1], plot_data.mod_data[1], ref_data.band_data])
+end
