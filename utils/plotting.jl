@@ -31,7 +31,7 @@ function plot_blow_up_function(blow_up_function; savedir="")
     plot!(size=(750,500))
     xlabel!(L"x")
     ylabel!(L"\mathscr{G}(x)")
-    title!("Blow up rate: "*latexstring("|\\cdot|^{$(blow_up_rate)}"))
+    title!("Blow up rate: "*latexstring("|\\cdot|^{-$(blow_up_rate)}"))
     ylims!(0,5)
 
     # Save plot if needed
@@ -207,14 +207,14 @@ function plot_band(band_ref, band_std, bands_mod;
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
     for (k, band_mod) in enumerate(bands_mod)
         εn_mod = band_mod.data[2+i_derivative]
-        blow_up_rate = [-1/2, -3/2, -5/2][k]#extract_blow_up_rate(band_mod.data[1][1])
+        blow_up_rate = [1/2, 3/2, 5/2][k]#extract_blow_up_rate(band_mod.data[1][1])
 
         # Avoid numerical instabilities due to FD derivative computation
         debug = div(length(εn_ref), length(εn_mod))
         x_axis_tmp = subset(x_axis, debug)
 
         plot!(p, x_axis_tmp, εn_mod, label=latexstring(dev_symbl*
-                     "\\tilde{\\varepsilon}_{$(n)\\mathbf{k}}^{E_c},\\; |⋅|^{$(blow_up_rate)}"),
+                     "\\tilde{\\varepsilon}_{$(n)\\mathbf{k}}^{E_c},\\; |⋅|^{-$(blow_up_rate)}"),
               linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k],
               # markershape=:auto, markercolor=:match)
               )

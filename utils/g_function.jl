@@ -53,9 +53,9 @@ C = 0.3
     (blow_up_rate==-5//2) && (C=0.04)
 """
 function gm(blow_up_rate::T; interval=[0.5, 0.75]) where {T<:Real}
-    C = 0.3
-    (blow_up_rate==-3//2) && (C=0.1)
-    (blow_up_rate==-5//2) && (C=0.04)
+    C = 0.5
+    (blow_up_rate==-3//2) && (C=0.18)
+    (blow_up_rate==-5//2) && (C=0.06)
     g3 = ha(C, blow_up_rate)
     gm(g3; interval)
 end
@@ -64,5 +64,5 @@ end
 Blow up part of gm. Good choice is a=0.48 and ε=-1.
 ε gives the blow up rate of gm.
 """
-Ca(a, ε) = (3/2)*(a^2)*(1-a)^(1/2 - ε)
-ha(a, ε) = y-> Ca(a, ε)/( (1-y)^(1/2 - ε) )
+Ca(a, ε) = (3/2)*(a^2)*(1-a)^(ε)
+ha(a, ε) = y-> Ca(a, ε)/( (1-y)^(ε) )
