@@ -13,7 +13,7 @@ function reference_data(system; k_path_res=200)
     @info "Computing reference band structure"
     band_data = compute_bands(scfres_ref.basis, kpath.kcoords;
                               n_bands=n_bands, ρ = scfres_ref.ρ,
-                              tol=1e-5)
+                              tol=1e-10)
     # Computation of k path for band plot
     (;system=system, scfres=scfres_ref, kpath=kpath, band_data=band_data)
 end
@@ -26,7 +26,8 @@ Ecut is to be taken small in order to show irregularities.
 "ref_data" is the output of the previous function "reference_data".
 """
 function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_function;
-                            ref_data, interval=[0.7, 0.75]) where {T<:Real}
+                            ref_data, interval=[0.7, 0.75],
+                            tol=1e-10) where {T<:Real}
 
     @info "Compute standard and modified kinetic term bands for low Ecut = $Ecut"
     # Compute PlaneWaveBasis for given Ecut with std and modified kinetic term.
@@ -41,8 +42,8 @@ function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_function;
     kcoords = ref_data.kpath.kcoords
     ρ_ref = ref_data.scfres.ρ
 
-    band_data_std = compute_bands(basis_std, kcoords, n_bands=n_bands, ρ=ρ_ref)
-    band_data_mod = compute_bands(basis, kcoords, n_bands=n_bands, ρ=ρ_ref)
+    band_data_std = compute_bands(basis_std, kcoords; n_bands=n_bands, ρ=ρ_ref, tol)
+    band_data_mod = compute_bands(basis, kcoords; n_bands=n_bands, ρ=ρ_ref, tol)
     εn_std = n->[εnk[n] for εnk in band_data_std.λ]
     εn_mod = n->[εnk[n] for εnk in band_data_mod.λ]
 
@@ -81,7 +82,7 @@ function focus_on_band(n, basis_in; ref_data,
     # Plot finite diff derivatives
     # Put in plot directly...
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
-    tmp_εn, tmp_kcoords = subset.((εn, kpath.kcoords), Ref(debug))
+    tmp_εn, tmp_kcoords = subset.((εn, kcoords), Ref(debug))
     ∂εn = band_derivative(tmp_εn, tmp_kcoords)
     ∂2εn = band_derivative(∂εn, tmp_kcoords)
 

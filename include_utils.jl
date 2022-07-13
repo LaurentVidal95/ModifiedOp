@@ -4,6 +4,7 @@ Pkg.activate("./");
 
 # SCF
 using DFTK
+using LinearAlgebra
 # Plots
 using Plots, Measures
 using Unitful, UnitfulAtomic

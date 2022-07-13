@@ -14,11 +14,11 @@ blow_up_rate = 3//2
 blow_up_function = gm(blow_up_rate; interval)
 
 # System
-silicon = silicon_PBE(Ecut_ref=15, n_bands=n_bands)
-graphene = graphene_PBE(Ecut_ref=20, kshift=zeros(3), n_bands=n_bands)
+silicon = silicon_PBE(Ecut_ref=15, n_bands=n_bands, kgrid=[12,12,12])
+# graphene = graphene_PBE(Ecut_ref=20, kshift=zeros(3), n_bands=n_bands, kgrid=[12,12,1])
 
 # Compute reference band with large Ecut
-ref_data = reference_data(graphene)
+ref_data = reference_data(silicon; k_path_res=200)
 
 # Compute bands for low Ecut with standard and modified kinetic term
 # May be a time consuming step

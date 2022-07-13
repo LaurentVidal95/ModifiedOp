@@ -95,9 +95,9 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     end
 
     # Reference
-    εF = ref_data.scfres.εF
+    εF = DFTK.fermi_level(band_data_ref.basis, band_data_ref.λ)
     λ_ref = [λk .- εF for λk in band_data_ref.λ]
-    p_ref = DFTK.plot_band_data(band_data_ref; εF, kpath.klabels)
+    p_ref = DFTK.plot_band_data(band_data_ref; εF=εF, kpath.klabels)
     ylims!(p_ref, define_ylims(band_data_ref, εF))
     plot!(p_ref, size=(800,500))
     ylabel!(p_ref, L"\varepsilon_{n,k}-\varepsilon_f\;(\mathrm{hartree})")
@@ -151,6 +151,37 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     p_ref, p_std, p_mod, p_err
 end
 
+function merge_band_plots(p_ref, p_std, p_mod)
+    # Extract plots data
+    x_axis = [s[:x] for s in p_ref.series_list]
+    y_ref = [s[:y] for s in p_ref.series_list]
+    y_std = [s[:y] for s in p_std.series_list]
+    y_mod = [s[:y] for s in p_mod.series_list]
+
+    # Plot
+    p = plot()
+    plot!(size=(500, 500))
+    xlabel!(p, L"\mathrm{wave\; vector\;}\mathbf{k}")
+    ylabel!(p, "Fermi level-adjusted eigenvalues (Hartree)")
+
+    # Split in two to avoid legend printing issues
+    plot!(x_axis[1:end-1], y_ref[1:end-1], label=:none, linecolor=:black,
+          linestyle=:dash, linewidth=1.2)
+    plot!(x_axis[1:end-1], y_std[1:end-1], label=:none, linecolor=myblue)
+    plot!(x_axis[1:end-1], y_mod[1:end-1], label=:none, linecolor=mygreen)
+
+    plot!(x_axis[end], y_ref[end], label=L"\varepsilon_{n}(\mathbf{k})"*
+          L"-\varepsilon\mathrm{F}(\varepsilon_{n})", linecolor=:black,
+          linestyle=:dash, linewidth=1.2)
+    plot!(x_axis[end], y_std[end], label=L"\varepsilon_{n}^{E_c}(\mathbf{k})"*
+          L"-\varepsilon\mathrm{F}(\varepsilon_n^{E_c})", linecolor=myblue)
+    plot!(x_axis[end], y_mod[end], label=L"\tilde{\varepsilon}_{n}^{E_c}(\mathbf{k})"*
+          L"-\varepsilon\mathrm{F}(\tilde{\varepsilon}_{n}^{E_c})", linecolor=mygreen)
+
+    xticks!(p, only(xticks(p_ref))...)
+    p
+end
+
 function compute_axis_attributes(path_section, num_k, ref_data)
     # k point as 1D axis coordinates
     tmp_plot = DFTK.plot_band_data(ref_data.band_data; ref_data.scfres.εF,
@@ -192,22 +223,21 @@ function plot_band(band_ref, band_std, bands_mod;
     # Plots
     p = plot()
     # Reference band
-    (i_derivative == 0) && (plot!(p, x_axis, εn_ref,
-                                  label=latexstring("\\varepsilon_{$(n)\\mathbf{k}}"),
-                                  linecolor=:black, linestyle=:dash, linewidth=1.2,
-                                  # markershape=:auto, markercolor=:match))
-                                  )
-                            )
+    plot!(p, x_axis, εn_ref,
+          label=latexstring(dev_symbl*"\\varepsilon_{$(n)\\mathbf{k}}"),
+          linecolor=:black, linestyle=:dash, linewidth=1.2,
+          )
+
     # Standard band
-    (i_derivative ≤ 1) && (plot!(p, x_axis, εn_std,
+    (i_derivative == 0) && (plot!(p, x_axis, εn_std,
                                  label=latexstring(dev_symbl*"\\varepsilon_{$(n)\\mathbf{k}}^{E_c}"),
                                  linewidth=1.2)#, markershape=:auto, markercolor=:match)
                            )
     # Modified band
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
-    for (k, band_mod) in enumerate(bands_mod)
+    for (k, band_mod) in enumerate(bands_mod[2:end])
         εn_mod = band_mod.data[2+i_derivative]
-        blow_up_rate = [1/2, 3/2, 5/2][k]#extract_blow_up_rate(band_mod.data[1][1])
+        blow_up_rate = ["1/2", "3/2", "5/2"][k]#extract_blow_up_rate(band_mod.data[1][1])
 
         # Avoid numerical instabilities due to FD derivative computation
         debug = div(length(εn_ref), length(εn_mod))
@@ -215,8 +245,7 @@ function plot_band(band_ref, band_std, bands_mod;
 
         plot!(p, x_axis_tmp, εn_mod, label=latexstring(dev_symbl*
                      "\\tilde{\\varepsilon}_{$(n)\\mathbf{k}}^{E_c},\\; |⋅|^{-$(blow_up_rate)}"),
-              linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k],
-              # markershape=:auto, markercolor=:match)
+              linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k+1],
               )
     end
 

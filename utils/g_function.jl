@@ -37,25 +37,18 @@ function gm(g3; interval=[0.5, 0.75])
     g1 = x->x'x
     x->gm(x, g1, g2, g3; interval)
 end
+
 """
 Some tests parameters:
-For [0.92, 0.95]:
-C = 0.6 
-    (blow_up_rate==-3//2) && (C=0.06) 
-    (blow_up_rate==-5//2) && (C=0.02) 
-For [0.97, 0.98]
-C = 0.2
-    (blow_up_rate==-3//2) && (C= 0.03)
-    (blow_up_rate==-5//2) && (C=0.003)
-For [0.85, 0.9]
-C = 0.3
-    (blow_up_rate==-3//2) && (C=0.1)
-    (blow_up_rate==-5//2) && (C=0.04)
+For [0.85, 0.90]:
+    C = 0.51
+    (blow_up_rate==3//2) && (C=0.175)
+    (blow_up_rate==5//2) && (C=0.06)
 """
 function gm(blow_up_rate::T; interval=[0.5, 0.75]) where {T<:Real}
-    C = 0.5
-    (blow_up_rate==-3//2) && (C=0.18)
-    (blow_up_rate==-5//2) && (C=0.06)
+    C = 0.51
+    (blow_up_rate==3//2) && (C=0.175)
+    (blow_up_rate==5//2) && (C=0.06)
     g3 = ha(C, blow_up_rate)
     gm(g3; interval)
 end
