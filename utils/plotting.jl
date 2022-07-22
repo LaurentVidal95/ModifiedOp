@@ -6,10 +6,10 @@ default(fontfamily="serif",
         linewidth=0.75, framestyle=:box,
         label=nothing, grid=:true,
         linecolor=myblue,
-        tickfontsize=12,
-        titlefontsize=12,
-        legendfontsize=12,
-        guidefontsize=12)
+        tickfontsize=14,
+        titlefontsize=14,
+        legendfontsize=14,
+        guidefontsize=14)
 
 """
 Plot gm blow up function on [0,1) given third part ha.
@@ -61,11 +61,10 @@ function plot_M_EC(ref_data; savedir="")
     # plot
     x_axis = LinRange(ticks[1][1], ticks[1][end], length(dist_to_mean))
     p = plot(x_axis, dist_to_mean, linewidth=1.5, label=:none)
-             # markersize=6, markershape=:cross,
 
     title!(split(ref_data.system.name,"_",keepempty=false)[1])
-    xlabel!(L"\mathrm{wave\; vector\;}\mathbf{k} ")
-    ylabel!(L"M_{E_c}(k)-\mathrm{mean}(M_{E_c})")
+    xlabel!(L"\mathbf{k}"*"-point")
+    ylabel!(L"M_{\mathrm{E}_\mathrm{c}}(\mathbf{k})-\mathrm{mean}(M_{\mathrm{E}_\mathrm{c}})")
     plot!(size=(500,500))
     xticks!(ticks...)
 
@@ -79,7 +78,6 @@ Plot bandstructures with respective standard and modified kinetic terms
 """
 function plot_bandstructures(plot_data; ref_data, savedir="")
     # Extract data
-    ρ_ref = ref_data.scfres.ρ
     band_data_ref = ref_data.band_data
     band_data_std = plot_data.std_data[1]
     band_data_mod = plot_data.mod_data[1]
@@ -97,18 +95,18 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     # Reference
     εF = DFTK.fermi_level(band_data_ref.basis, band_data_ref.λ)
     λ_ref = [λk .- εF for λk in band_data_ref.λ]
-    p_ref = DFTK.plot_band_data(band_data_ref; εF=εF, kpath.klabels)
+    p_ref = DFTK.plot_band_data(band_data_ref; εF=εF, kpath.klabels,
+                                linewitdh=1.2, linecolor=:black)
     ylims!(p_ref, define_ylims(band_data_ref, εF))
-    plot!(p_ref, size=(800,500))
+    plot!(p_ref, size=(500,500))
     ylabel!(p_ref, L"\varepsilon_{n,k}-\varepsilon_f\;(\mathrm{hartree})")
     xlabel!(p_ref," ")
-    title!(p_ref,"Reference band diagram")
 
     # Standard
     εF = DFTK.fermi_level(band_data_std.basis, band_data_std.λ)
     λ_std = [λk .- εF for λk in band_data_std.λ]
     p_std = DFTK.plot_band_data(band_data_std; εF=εF, kpath.klabels)
-    plot!(p_std, size=(800,500))
+    plot!(p_std, size=(500,500))
     ylims!(p_std, define_ylims(band_data_std, εF))
     xlabel!(p_std, " ")
     ylabel!(p_std, L"\varepsilon_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
@@ -118,7 +116,7 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     εF = DFTK.fermi_level(band_data_mod.basis, band_data_mod.λ)
     λ_mod = [λk .- εF for λk in band_data_mod.λ]
     p_mod = DFTK.plot_band_data(band_data_mod; εF, kpath.klabels)
-    plot!(p_mod, size=(800,500))
+    plot!(p_mod, size=(500,500))
     ylims!(p_mod, define_ylims(band_data_mod, εF))
     ylabel!(p_mod, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
     title!(p_mod,"Modified kinetic term")
@@ -135,7 +133,7 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     plot!(p_err, x_axis, err_mod,
           label=L"\tilde{\varepsilon}_{n,k}^{E_c}",
           linecolor=mygreen)
-    plot!(p_err, size=(800,500))
+    plot!(p_err, size=(500,500))
     xticks!(ticks...)
     xlabel!(L"\mathrm{wave\; vector\;}k ")
     ylabel!("Mean absolute deviation (hartree)")
@@ -222,6 +220,8 @@ function plot_band(band_ref, band_std, bands_mod;
 
     # Plots
     p = plot()
+    default(tickfontsize=17, titlefontsize=17, legendfontsize=17, guidefontsize=17)
+
     # Reference band
     plot!(p, x_axis, εn_ref,
           label=latexstring(dev_symbl*"\\varepsilon_{$(n)\\mathbf{k}}"),
@@ -230,29 +230,30 @@ function plot_band(band_ref, band_std, bands_mod;
 
     # Standard band
     (i_derivative == 0) && (plot!(p, x_axis, εn_std,
-                                 label=latexstring(dev_symbl*"\\varepsilon_{$(n)\\mathbf{k}}^{E_c}"),
-                                 linewidth=1.2)#, markershape=:auto, markercolor=:match)
+                                 label=latexstring(dev_symbl*"\\varepsilon_{$(n)\\mathbf{k}}^{\\mathrm{E}_\\mathrm{c}}"),
+                                 linewidth=1.2)
                            )
     # Modified band
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
-    for (k, band_mod) in enumerate(bands_mod[2:end])
+    for (k, band_mod) in enumerate(bands_mod[1:end])
         εn_mod = band_mod.data[2+i_derivative]
-        blow_up_rate = ["1/2", "3/2", "5/2"][k]#extract_blow_up_rate(band_mod.data[1][1])
+        blow_up_rate = extract_blow_up_rate(band_mod.data[1][1])
 
         # Avoid numerical instabilities due to FD derivative computation
         debug = div(length(εn_ref), length(εn_mod))
         x_axis_tmp = subset(x_axis, debug)
 
         plot!(p, x_axis_tmp, εn_mod, label=latexstring(dev_symbl*
-                     "\\tilde{\\varepsilon}_{$(n)\\mathbf{k}}^{E_c},\\; |⋅|^{-$(blow_up_rate)}"),
-              linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k+1],
+                     "\\tilde{\\varepsilon}_{$(n)\\mathbf{k}}^{\\mathrm{E}_\\mathrm{c}}"*
+                     ",\\; |⋅|^{-$(blow_up_rate)}"),
+              linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k],
               )
     end
 
     # Plot args
     plot!(p, size=(500,500), legend=:bottomleft)
-    ylabel!(p, "eigenvalues (hartree)")
-    xlabel!(p, "wave vector "*L"\mathbf{k}")
+    ylabel!(p, "Eigenvalues (hartree)")
+    xlabel!(p, L"\mathbf{k}"*"-point")
     xticks!(p, [k_start, k_end], path_section)
     !isempty(savedir) && (savefig(p,
                            joinpath(savedir, "band_$(n)_dev_$(i_derivative)_"*

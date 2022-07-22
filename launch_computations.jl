@@ -14,51 +14,51 @@ blow_up_rate = 3//2
 blow_up_function = gm(blow_up_rate; interval)
 
 # System
-silicon = silicon_PBE(Ecut_ref=15, n_bands=n_bands, kgrid=[12,12,12])
-# graphene = graphene_PBE(Ecut_ref=20, kshift=zeros(3), n_bands=n_bands, kgrid=[12,12,1])
+# silicon = silicon_PBE(Ecut_ref=20, n_bands=n_bands, kgrid=[10,10,10])
+graphene = graphene_PBE(Ecut_ref=20, kshift=zeros(3), n_bands=n_bands, kgrid=[12,12,1])
 
 # Compute reference band with large Ecut
-ref_data = reference_data(silicon; k_path_res=200)
+ref_data_graphene = reference_data(graphene; k_path_res=300)
 
-# Compute bands for low Ecut with standard and modified kinetic term
-# May be a time consuming step
-bandplot_data = bandstructure_data(Ecut, n_bands, blow_up_function;
-                                   ref_data, interval)
+# # Compute bands for low Ecut with standard and modified kinetic term
+# # May be a time consuming step
+# bandplot_data = bandstructure_data(Ecut, n_bands, blow_up_function;
+#                                    ref_data, interval)
 
-# generate and save plots
-!isdir("../output/confirm_proof") && (mkdir("../output/confirm_proof"))
-savedir="../output/confirm_proof/$(system.name)"
-!isdir(savedir) && (mkdir(savedir))
+# # generate and save plots
+# !isdir("../output/confirm_proof") && (mkdir("../output/confirm_proof"))
+# savedir="../output/confirm_proof/$(system.name)"
+# !isdir(savedir) && (mkdir(savedir))
 
-# Plots on whole band diagram
-plot_M_EC(ref_data; savedir)
-plot_blow_up_function(blow_up_function; savedir)
-plot_bandstructures(bandplot_data; ref_data, savedir) 
+# # Plots on whole band diagram
+# plot_M_EC(ref_data; savedir)
+# plot_blow_up_function(blow_up_function; savedir)
+# plot_bandstructures(bandplot_data; ref_data, savedir) 
 
 
-# Focus on a given band
-n=1  #n = 2                         # Band to focus on
-path_section=["X", "U"]             # Section of the k_path to focus on
-num_k=2000                           # Resolution of the band
-tol=1e-12                           # Tolerance for the eigensolver for the Hk
-maxiter=200                         # max_iterations for lobpcg solver. default=100.
-blow_up_rates = [1/2, 3/2, 5/2]  # All blow-up rates to test
+# # Focus on a given band
+# n=1  #n = 2                         # Band to focus on
+# path_section=["X", "U"]             # Section of the k_path to focus on
+# num_k=2000                           # Resolution of the band
+# tol=1e-12                           # Tolerance for the eigensolver for the Hk
+# maxiter=200                         # max_iterations for lobpcg solver. default=100.
+# blow_up_rates = [1/2, 3/2, 5/2]  # All blow-up rates to test
 
-# Reference fft grid so that every one has the same reference ground state density.
-ref_fft_size = ref_data.scfres.basis.fft_size
+# # Reference fft grid so that every one has the same reference ground state density.
+# ref_fft_size = ref_data.scfres.basis.fft_size
 
-basis_std = ref_data.system.basis(Kinetic(), Ecut=Ecut, fft_size=ref_fft_size)
-basis_mod(blow_up_rate) = ref_data.system.basis(
-    ModifiedKinetic(blow_up=gm(blow_up_rate; interval)),
-    Ecut=Ecut, fft_size=ref_fft_size)
+# basis_std = ref_data.system.basis(Kinetic(), Ecut=Ecut, fft_size=ref_fft_size)
+# basis_mod(blow_up_rate) = ref_data.system.basis(
+#     ModifiedKinetic(blow_up=gm(blow_up_rate; interval)),
+#     Ecut=Ecut, fft_size=ref_fft_size)
 
-# Computation of the bands
-band_ref_data = focus_on_band(n, ref_data.scfres.basis; ref_data,
-                              path_section, num_k, tol)
-band_std_data = focus_on_band(n, basis_std; ref_data,
-                              path_section, num_k, tol)
-bands_mod_data = focus_on_band.(Ref(n), basis_mod.(blow_up_rates);
-                              ref_data, path_section, num_k, tol, maxiter)
+# # Computation of the bands
+# band_ref_data = focus_on_band(n, ref_data.scfres.basis; ref_data,
+#                               path_section, num_k, tol)
+# band_std_data = focus_on_band(n, basis_std; ref_data,
+#                               path_section, num_k, tol)
+# bands_mod_data = focus_on_band.(Ref(n), basis_mod.(blow_up_rates);
+#                               ref_data, path_section, num_k, tol, maxiter)
 
 # Plot
 # plot_band(band_ref_data, band_std_data, bands_mod_data;

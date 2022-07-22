@@ -9,7 +9,7 @@ function reference_data(system; k_path_res=200)
     # Remove extra band (added for convergence)
     n_bands = length(scfres_ref.eigenvalues[1]) - 3
     kpath = high_symmetry_kpath(scfres_ref.basis.model, kline_density=k_path_res)
-
+    @show length(kpath.kcoords)
     @info "Computing reference band structure"
     band_data = compute_bands(scfres_ref.basis, kpath.kcoords;
                               n_bands=n_bands, ρ = scfres_ref.ρ,
@@ -96,13 +96,6 @@ function plot_dos_perso(data)
     εF = DFTK.fermi_level(basis, eigenvalues)
     plot_dos(basis, eigenvalues; εF)
 end
-
-# # Interpolate the reference density in the current fft_grid
-# # Use only if fft_size of basis and basis_std is different from basis_ref.fft_size
-# # Less accurate than simply taking the same fft_size for every one.
-# add_dim(x) = reshape(x, (size(x)...,1))
-# ρ_ref = add_dim(DFTK.interpolate_density(ref_data.scfres.ρ[:,:,:,1],
-#                                          ref_data.scfres.basis, basis))
 
 function compare_dos(plot_data; ref_data)
     function compute_idos(band_data)
