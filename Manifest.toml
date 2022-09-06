@@ -189,7 +189,7 @@ version = "0.6.2"
 deps = ["AbstractFFTs", "AtomsBase", "BlockArrays", "Brillouin", "ChainRulesCore", "Conda", "Dates", "DftFunctionals", "FFTW", "ForwardDiff", "InteratomicPotentials", "Interpolations", "IterTools", "IterativeSolvers", "Libxc", "LineSearches", "LinearAlgebra", "LinearMaps", "MPI", "Markdown", "NLsolve", "Optim", "OrderedCollections", "PeriodicTable", "Polynomials", "Primes", "Printf", "ProgressMeter", "PyCall", "Requires", "Roots", "SparseArrays", "SpecialFunctions", "Spglib", "StaticArrays", "Statistics", "TimerOutputs", "Unitful", "UnitfulAtomic", "spglib_jll"]
 git-tree-sha1 = "273de8505e0fd175cd012d2d8ff62a63749031ff"
 repo-rev = "modified_kinetic_term"
-repo-url = "/home/lvidal/Documents/CERMICS/these/modified_kinetic_term/code/DFTK_modified_kinetic_term.jl"
+repo-url = "https://github.com/LaurentVidal95/DFTK.jl.git"
 uuid = "acf6eb54-70d9-11e9-0013-234b7a5f5337"
 version = "0.5.7"
 
