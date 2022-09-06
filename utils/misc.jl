@@ -12,12 +12,12 @@ Compute finite difference derivative of the band εn.
 εn is the vector of eigenvalues for each k-points.
 """
 function band_derivative(εn::Vector{T}, kcoords) where {T<:Real}
-    @show δk = norm(kcoords[2] .- kcoords[1],1)
+    δk = norm(kcoords[2] .- kcoords[1],1)
     [(εn[i+1]-εn[i])/δk for i in 1:length(εn)-1]
 end
 
 """
-
+Save the result of "focus_on_band" routine for plotting.
 """
 function save_band_data(band_data, file::String)
     @assert !(isfile(file)) "$(file) already exists" 
@@ -36,10 +36,12 @@ function save_band_data(band_data, file::String)
 end
 
 """
-
+Read a json file obtained with "save_band_data".
 """
 function read_band_data(file)
     data_in = open(JSON3.read, file)
     (; path_section=data_in["path_section"],
      data=([], data_in["εn"], data_in["dev_εn"], data_in["dev2_εn"]))
 end
+
+DefaultInterval = [0.85, 0.90]

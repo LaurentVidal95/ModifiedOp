@@ -29,7 +29,7 @@ function graphene_PBE(; n_bands=13, Ecut_ref=15,
         positions = [[0.0, 0.0, 0.0], [1//3, 2//3, 0.0]]
         # PBE functional
         model_name="custom"
-        (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
+        (KineticTerm.blowup isa VariableBlowupCHV) && (model_name="ModifiedKinetic")
         Model(lattice, atoms, positions; terms=PBE_terms(KineticTerm),
               model_name=model_name, temperature, smearing)
     end
@@ -46,7 +46,7 @@ function graphene_PBE(; n_bands=13, Ecut_ref=15,
         self_consistent_field(basis, n_bands=n_bands);
     end
     (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene,
-     name="graphene_PBE")
+     name="graphene_PBE", path_section=["M","K"], n=2)
 end
 
 """
@@ -67,7 +67,7 @@ function silicon_PBE(;n_bands=8, Ecut_ref=15,
         atoms = [Si, Si]
         positions = [ones(3)/8, -ones(3)/8]
         # PBE functional
-        model_name = (KineticTerm isa ModifiedKinetic) ? "ModifiedKinetic" : "custom"
+        model_name = (KineticTerm.blowup isa VariableBlowupCHV) ? "ModifiedKinetic" : "custom"
         # (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
         Model(lattice, atoms, positions; terms=PBE_terms(KineticTerm),
               model_name=model_name,
@@ -86,7 +86,7 @@ function silicon_PBE(;n_bands=8, Ecut_ref=15,
         self_consistent_field(basis, n_bands=n_bands);
     end
     (;scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon,
-     name="silicon_PBE")
+     name="silicon_PBE", path_section=["X","U"], n=1)
 end
 
 # """

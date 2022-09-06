@@ -1,27 +1,37 @@
 Julia code to assert accuracy and regularizing properties of hamiltonian with blow up
-kinetic terms.
-This code is used in [1] -> [insert arXiv link]
+kinetic terms. This code is used in [1] -> [insert arXiv link]
+It is a simple top layer over a custom version of the package DFTK [insert ref] (provided in this repository).
 
+# Requirements: 
+Julia 1.8.
 
-# Requirements:
-Julia 1.7 with the libraries:
-- Plots, Measures, LaTeXStrings for plottings;
-- DelimitedFiles for saving data.
-
-This code is a simple top layer over a custom version of the package DFTK [insert ref] (provided in this repository).
+# Installing all dependancies
+Simply open a Julia shell with `julia --project` in your local copy of this repository and call
+`using Pkg; Pkg.instantiate(".")` to install all the needed dependancies.
 
 # Usage
 This code runs the computations to perform the numerical experiments from [1].
+
 To perform the computations, first open the Julia shell with `julia --project` in your
-local copy of this repository and simply call
+local copy of this repository, and call `include("launch_computations.jl")` to precompile
+the code, and to define the global parameters as well as the test cases.
+
+Then a simple call to the `launch_computations` suffices. Let us do a very rough (but fast)
+computation for silicon with PBE exchange correlation functional. Simply define an output directory with
+`mkdir("../silicon_PBE")` and call
+
 ```
-include("launch_computations.jl")
+launch_computations(silicon, blowup; 
+               bandplot_res=100, single_band_res=100, output_dir="../silicon_PBE", Ecut, n_bands)
 ```
-Default system is silicon with PBE exchange correlation functional.
-The code supports all other test cases defined in `utils/chemical_systems.jl`, by simply
-redefining the variable `system=...` in `launch_computations.jl`.
+
+The arguments `bandplot_res` and `single_band_res` control the number of k-points respectively in the
+band diagram and in the focus on a single band. For a precise result, they should be taken above
+`200` and `3000` respectively. (Beware: time consuming).
+
+The code supports graphene with PBE functional. Any other system can be added in `utils/test_cases.jl` 
+by following the same syntaxe.
 
 # Contact
 This is research code, not necessarily user-friendly, actively maintened or extremely robust.
 If you have questions or encounter problems, contact [instert contact]
-

@@ -14,14 +14,14 @@ default(fontfamily="serif",
 """
 Plot gm blow up function on [0,1) given third part ha.
 """
-function plot_blow_up_function(blow_up_function; savedir="")    
+function plot_blowup_function(blowup; plot_dir="")    
     x_axis = LinRange(0, 0.99, 10000)
-    blow_up_rate = blow_up_function.g3.ε
+    blowup_rate = blowup.p
 
     # Plot
-    p = plot(x_axis, blow_up_function.(x_axis), label=:none, xlims=[0,1])
+    p = plot(x_axis, blowup.(x_axis), label=:none, xlims=[0,1])
     
-    vline!(blow_up_function.interval, label=L"C^2"*" polynomial interpolation",
+    vline!(blowup.blowup_function.interval, label="smooth interpolation",
            linestyle=:dash, linecolor=mygreen)
     vline!([1], label=:none, linecolor=:black)
     plot!(x->x^2, label=L"x\mapsto x^2", linestyle=:dash, linecolor=:black)
@@ -31,11 +31,11 @@ function plot_blow_up_function(blow_up_function; savedir="")
     plot!(size=(750,500))
     xlabel!(L"x")
     ylabel!(L"\mathscr{G}(x)")
-    title!("Blow up rate: "*latexstring("|\\cdot|^{-$(blow_up_rate)}"))
+    title!("Blow up rate: "*latexstring("|\\cdot|^{-$(blowup_rate)}"))
     ylims!(0,5)
 
     # Save plot if needed
-    !isempty(savedir) && (savefig(p, joinpath(savedir,"blow_up_function.pdf")))
+    !isempty(plot_dir) && (savefig(p, joinpath(plot_dir,"blowup_function.pdf")))
 
     p
 end
@@ -43,7 +43,7 @@ end
 """
 Plot M_EC along reference k-path
 """
-function plot_M_EC(ref_data; savedir="")
+function plot_M_EC(ref_data; plot_dir="")
     basis = ref_data.band_data.basis
     kpath = ref_data.kpath
     tmp_plot = DFTK.plot_band_data(ref_data.band_data; ref_data.scfres.εF, kpath.klabels)
@@ -68,7 +68,7 @@ function plot_M_EC(ref_data; savedir="")
     plot!(size=(500,500))
     xticks!(ticks...)
 
-    !isempty(savedir) && (savefig(p, joinpath(savedir, "M_EC.pdf")))
+    !isempty(plot_dir) && (savefig(p, joinpath(plot_dir, "M_EC.pdf")))
 
     p
 end
@@ -76,7 +76,7 @@ end
 """
 Plot bandstructures with respective standard and modified kinetic terms
 """
-function plot_bandstructures(plot_data; ref_data, savedir="")
+function plot_bandstructures(plot_data; ref_data, plot_dir="")
     # Extract data
     band_data_ref = ref_data.band_data
     band_data_std = plot_data.std_data[1]
@@ -92,8 +92,12 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
         (y_min, y_max) .- εF
     end
 
+    # Needed by DFTK.
+    occupation_threshold = DFTK.default_occupation_threshold()
+    
     # Reference
-    εF = DFTK.fermi_level(band_data_ref.basis, band_data_ref.λ)
+    εF = DFTK.compute_occupation(band_data_ref.basis, band_data_ref.λ;
+                                 occupation_threshold).εF
     λ_ref = [λk .- εF for λk in band_data_ref.λ]
     p_ref = DFTK.plot_band_data(band_data_ref; εF=εF, kpath.klabels,
                                 linewitdh=1.2, linecolor=:black)
@@ -103,7 +107,8 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     xlabel!(p_ref," ")
 
     # Standard
-    εF = DFTK.fermi_level(band_data_std.basis, band_data_std.λ)
+    εF = DFTK.compute_occupation(band_data_std.basis, band_data_std.λ;
+                                 occupation_threshold).εF
     λ_std = [λk .- εF for λk in band_data_std.λ]
     p_std = DFTK.plot_band_data(band_data_std; εF=εF, kpath.klabels)
     plot!(p_std, size=(500,500))
@@ -113,7 +118,8 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     title!(p_std,L"\mathrm{Standard\; kinetic\; term}")
 
     # Modified
-    εF = DFTK.fermi_level(band_data_mod.basis, band_data_mod.λ)
+    εF = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ;
+                                 occupation_threshold).εF
     λ_mod = [λk .- εF for λk in band_data_mod.λ]
     p_mod = DFTK.plot_band_data(band_data_mod; εF, kpath.klabels)
     plot!(p_mod, size=(500,500))
@@ -139,11 +145,11 @@ function plot_bandstructures(plot_data; ref_data, savedir="")
     ylabel!("Mean absolute deviation (hartree)")
           
     # Save plots if a directory is provided
-    if !isempty(savedir)
-        savefig(p_ref, joinpath(savedir, "band_plot_ref.pdf"))
-        savefig(p_std, joinpath(savedir, "band_plot_std.pdf"))
-        savefig(p_mod, joinpath(savedir, "band_plot_mod.pdf"))
-        savefig(p_err, joinpath(savedir, "band_plot_errors.pdf"))
+    if !isempty(plot_dir)
+        savefig(p_ref, joinpath(plot_dir, "band_plot_ref.pdf"))
+        savefig(p_std, joinpath(plot_dir, "band_plot_std.pdf"))
+        savefig(p_mod, joinpath(plot_dir, "band_plot_mod.pdf"))
+        savefig(p_err, joinpath(plot_dir, "band_plot_errors.pdf"))
     end
 
     p_ref, p_std, p_mod, p_err
@@ -201,7 +207,7 @@ zoom_data contains values of the band for reference, standard and modified
 kinetic term as well as the section of the path on which to plot.
 """
 function plot_band(band_ref, band_std, bands_mod;
-                   ref_data, savedir="",
+                   ref_data, plot_dir="",
                    i_derivative=zero(Int64),
                    )
     @assert (2+i_derivative ≤ length(band_ref.data)) "Order of derivative to high"
@@ -237,7 +243,7 @@ function plot_band(band_ref, band_std, bands_mod;
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
     for (k, band_mod) in enumerate(bands_mod[1:end])
         εn_mod = band_mod.data[2+i_derivative]
-        blow_up_rate = extract_blow_up_rate(band_mod.data[1][1])
+        blowup_rate = ["1/2", "3/2", "5/2"][k] #extract_blowup_rate(band_mod.data[1][1])
 
         # Avoid numerical instabilities due to FD derivative computation
         debug = div(length(εn_ref), length(εn_mod))
@@ -245,7 +251,7 @@ function plot_band(band_ref, band_std, bands_mod;
 
         plot!(p, x_axis_tmp, εn_mod, label=latexstring(dev_symbl*
                      "\\tilde{\\varepsilon}_{$(n)\\mathbf{k}}^{\\mathrm{E}_\\mathrm{c}}"*
-                     ",\\; |⋅|^{-$(blow_up_rate)}"),
+                     ",\\; p=$(blowup_rate)}"),
               linewidth=1.2, linecolor=palette([:green, :red], length(bands_mod))[k],
               )
     end
@@ -255,8 +261,8 @@ function plot_band(band_ref, band_std, bands_mod;
     ylabel!(p, "Eigenvalues (hartree)")
     xlabel!(p, L"\mathbf{k}"*"-point")
     xticks!(p, [k_start, k_end], path_section)
-    !isempty(savedir) && (savefig(p,
-                           joinpath(savedir, "band_$(n)_dev_$(i_derivative)_"*
+    !isempty(plot_dir) && (savefig(p,
+                           joinpath(plot_dir, "band_$(n)_dev_$(i_derivative)_"*
                                     "$(path_section[1])_$(path_section[2]).pdf"))
                           )                          
     p, (x_axis, k_start, k_end)

@@ -6,6 +6,7 @@ Also generates the standard band plot k-path for the given system.
 function reference_data(system; k_path_res=200)
     # Launch scf with standard kinetic term
     scfres_ref = system.scf()
+
     # Remove extra band (added for convergence)
     n_bands = length(scfres_ref.eigenvalues[1]) - 3
     kpath = high_symmetry_kpath(scfres_ref.basis.model, kline_density=k_path_res)
@@ -25,8 +26,8 @@ gm.
 Ecut is to be taken small in order to show irregularities.
 "ref_data" is the output of the previous function "reference_data".
 """
-function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_function;
-                            ref_data, interval=[0.7, 0.75],
+function bandstructure_data(Ecut::T, n_bands::Int64, blowup;
+                            ref_data, interval=DefaultInterval,
                             tol=1e-10) where {T<:Real}
 
     @info "Compute standard and modified kinetic term bands for low Ecut = $Ecut"
@@ -35,8 +36,7 @@ function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_function;
     # all precision on the reference density to assemble the hamiltonian blocks
     ref_fft_size = ref_data.scfres.basis.fft_size
     basis_std = ref_data.system.basis(Kinetic(), Ecut=Ecut, fft_size=ref_fft_size)
-    basis = ref_data.system.basis(ModifiedKinetic(blow_up=blow_up_function), Ecut=Ecut,
-                                  fft_size=ref_fft_size)
+    basis = ref_data.system.basis(Kinetic(;blowup), Ecut=Ecut, fft_size=ref_fft_size)
 
     # Compute energy bands along reference k-path
     kcoords = ref_data.kpath.kcoords
@@ -51,12 +51,12 @@ function bandstructure_data(Ecut::T, n_bands::Int64, blow_up_function;
     (;std_data=(band_data_std, εn_std), mod_data=(band_data_mod, εn_mod))
 end
 
-function extract_blow_up_rate(model)
+function extract_blowup_rate(model)
     (model.model_name=="ModifiedKinetic") &&
-        (return model.term_types[1].blow_up_function.g3.ε)
+        (return model.term_types[1].blowup.p)
     NaN
 end
-extract_blow_up_rate(basis::PlaneWaveBasis) = extract_blow_up_rate(basis.model)
+extract_blowup_rate(basis::PlaneWaveBasis) = extract_blowup_rate(basis.model)
 
 function focus_on_band(n, basis_in; ref_data,
                        num_k=100, path_section=ref_data.kpath.kpath[1][1:2],
@@ -66,9 +66,9 @@ function focus_on_band(n, basis_in; ref_data,
     # Compute zone to zoom on
     kpath = ref_data.kpath
     k_start_label, k_end_label = path_section
-    blow_up_rate = extract_blow_up_rate(basis_in)
+    blowup_rate = extract_blowup_rate(basis_in)
     @info "Focusing on band $n between $(k_start_label) and $(k_end_label) with "*
-          "$(num_k) points.\n"*"Blow-up rate: $(blow_up_rate)"
+          "$(num_k) points.\n"*"Blow-up rate: $(blowup_rate)"
 
     # Pre-computations
     kcoords = generate_kpath(kpath.klabels[k_start_label], kpath.klabels[k_end_label], num_k)
