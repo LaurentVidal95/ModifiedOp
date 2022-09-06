@@ -7,16 +7,19 @@ Julia 1.8.
 
 # Installing all dependancies
 Simply open a Julia shell with `julia --project` in your local copy of this repository and call
-`using Pkg; Pkg.instantiate(".")` to install all the needed dependancies.
+```
+using Pkg; Pkg.instantiate(".")
+``` 
+to install all the needed dependancies.
 
 # Usage
 This code runs the computations to perform the numerical experiments from [1].
 
-To perform the computations, first open the Julia shell with `julia --project` in your
-local copy of this repository, and call `include("launch_computations.jl")` to precompile
-the code, and to define the global parameters as well as the test cases.
+To run the computations, first open the Julia shell with `julia --project` in your
+local copy of this repository and call `include("launch_computations.jl")` both to precompile
+the code and to define the global parameters.
 
-Then a simple call to the `launch_computations` suffices. Let us do a very rough (but fast)
+Then a simple call to the `launch_computations` function suffices. Let us do a very rough (but fast)
 computation for silicon with PBE exchange correlation functional. Simply define an output directory with
 `mkdir("../silicon_PBE")` and call
 
@@ -27,7 +30,9 @@ launch_computations(silicon, blowup;
 
 The arguments `bandplot_res` and `single_band_res` control the number of k-points respectively in the
 band diagram and in the focus on a single band. For a precise result, they should be taken above
-`200` and `3000` respectively. (Beware: time consuming).
+`200` and `2000` respectively. The results of the paper are displayed for `bandplot_res=300` and 
+`single_band_res=4000`. Note that the process is time consuming for these parameters and have
+been run on a cluster.
 
 The code supports graphene with PBE functional. Any other system can be added in `utils/test_cases.jl` 
 by following the same syntaxe.
