@@ -19,7 +19,7 @@ function plot_blowup_function(blowup; plot_dir="")
     blowup_rate = blowup.p
 
     # Plot
-    p = plot(x_axis, blowup.(x_axis), label=:none, xlims=[0,1])
+    p = plot(x_axis, (x_axis .^2) .* blowup.(x_axis, Ref(1/2)), label=:none, xlims=[0,1])
     
     vline!(blowup.blowup_function.interval, label="smooth interpolation",
            linestyle=:dash, linecolor=mygreen)
@@ -209,7 +209,7 @@ kinetic term as well as the section of the path on which to plot.
 function plot_band(band_ref, band_std, bands_mod;
                    ref_data, plot_dir="",
                    i_derivative=zero(Int64),
-                   )
+                   n=1)
     @assert (2+i_derivative ≤ length(band_ref.data)) "Order of derivative to high"
 
     # Extract bands and derivatives
@@ -243,7 +243,7 @@ function plot_band(band_ref, band_std, bands_mod;
     subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
     for (k, band_mod) in enumerate(bands_mod[1:end])
         εn_mod = band_mod.data[2+i_derivative]
-        blowup_rate = ["1/2", "3/2", "5/2"][k] #extract_blowup_rate(band_mod.data[1][1])
+        blowup_rate = extract_blowup_rate(band_mod.data[1][1])
 
         # Avoid numerical instabilities due to FD derivative computation
         debug = div(length(εn_ref), length(εn_mod))

@@ -96,16 +96,16 @@ function launch_computations(system, blowup; bandplot_res=200, single_band_res=2
 
     # Plot
     plot_band(band_ref_data, band_std_data, bands_mod_data;
-              ref_data, plot_dir, i_derivative=0)
+              ref_data, plot_dir, i_derivative=0, n)
     plot_band(band_ref_data, band_std_data, bands_mod_data;
-              ref_data, plot_dir, i_derivative=1)
+              ref_data, plot_dir, i_derivative=1, n)
     plot_band(band_ref_data, band_std_data, bands_mod_data;
-              ref_data, plot_dir, i_derivative=2)
+              ref_data, plot_dir, i_derivative=2, n)
 end
 
 ## EXAMPLES: launch computation for silicon
 ## bandplot_res and single_band_res have been set to avoid long computation time.
 ## The results of the paper are displayed for bandplot_res=300 and single_band_res=4000.
 
-# mkdir("../silicon_PBE")
-# launch_computations(silicon, blowup; bandplot_res=100, single_band_res=100, output_dir="", Ecut, n_bands)
+# mkdir("../test")
+# launch_computations(silicon, blowup; bandplot_res=100, single_band_res=100, output_dir="../test", Ecut, n_bands)

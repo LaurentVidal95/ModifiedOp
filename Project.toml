@@ -1,4 +1,5 @@
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Brillouin = "23470ee3-d0df-4052-8b1a-8cbd6363e7f0"
 DFTK = "acf6eb54-70d9-11e9-0013-234b7a5f5337"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
