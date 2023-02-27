@@ -8,15 +8,16 @@ function reference_data(system; k_path_res=200)
     scfres_ref = system.scf()
 
     # Remove extra band (added for convergence)
-    n_bands = length(scfres_ref.eigenvalues[1]) - 3
-    kpath = high_symmetry_kpath(scfres_ref.basis.model, kline_density=k_path_res)
-    @show length(kpath.kcoords)
+    n_bands = scfres_ref.n_bands_converge
+    kpath = irrfbz_path(scfres_ref.basis.model)
+    kcoords = DFTK.Brillouin.interpolate(kpath, density=k_path_res)
+    @show length(kcoords)
     @info "Computing reference band structure"
-    band_data = compute_bands(scfres_ref.basis, kpath.kcoords;
-                              n_bands=n_bands, ρ = scfres_ref.ρ,
+    band_data = compute_bands(scfres_ref.basis, kcoords;
+                              n_bands, ρ = scfres_ref.ρ, 
                               tol=1e-10)
     # Computation of k path for band plot
-    (;system=system, scfres=scfres_ref, kpath=kpath, band_data=band_data)
+    (;system, scfres=scfres_ref, kpath, kcoords, band_data)
 end
 
 """
@@ -39,7 +40,7 @@ function bandstructure_data(Ecut::T, n_bands::Int64, blowup;
     basis = ref_data.system.basis(Kinetic(;blowup), Ecut=Ecut, fft_size=ref_fft_size)
 
     # Compute energy bands along reference k-path
-    kcoords = ref_data.kpath.kcoords
+    kcoords = ref_data.kcoords
     ρ_ref = ref_data.scfres.ρ
 
     band_data_std = compute_bands(basis_std, kcoords; n_bands=n_bands, ρ=ρ_ref, tol)
@@ -59,7 +60,7 @@ end
 extract_blowup_rate(basis::PlaneWaveBasis) = extract_blowup_rate(basis.model)
 
 function focus_on_band(n, basis_in; ref_data,
-                       num_k=100, path_section=ref_data.kpath.kpath[1][1:2],
+                       num_k=100, path_section=ref_data.kpath.paths[1][1:2],
                        tol=1e-4,
                        maxiter=200,
                        debug=5)
@@ -71,7 +72,7 @@ function focus_on_band(n, basis_in; ref_data,
           "$(num_k) points.\n"*"Blow-up rate: $(blowup_rate)"
 
     # Pre-computations
-    kcoords = generate_kpath(kpath.klabels[k_start_label], kpath.klabels[k_end_label], num_k)
+    kcoords = generate_kpath(kpath.points[k_start_label], kpath.points[k_end_label], num_k)
     ρ_ref = ref_data.scfres.ρ
 
     # Compute band with higher accuracy between two band diagram points

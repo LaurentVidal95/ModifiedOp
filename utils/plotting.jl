@@ -46,7 +46,7 @@ Plot M_EC along reference k-path
 function plot_M_EC(ref_data; plot_dir="")
     basis = ref_data.band_data.basis
     kpath = ref_data.kpath
-    tmp_plot = DFTK.plot_band_data(ref_data.band_data; ref_data.scfres.εF, kpath.klabels)
+    tmp_plot = DFTK.plot_band_data(ref_data.kcoords, ref_data.band_data; ref_data.scfres.εF)
     ticks = only(xticks(tmp_plot))
 
     function compute_M_EC_along_path(basis)
@@ -81,9 +81,9 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     band_data_ref = ref_data.band_data
     band_data_std = plot_data.std_data[1]
     band_data_mod = plot_data.mod_data[1]
-
+        
     kpath = ref_data.kpath
-    kcoords = kpath.kcoords
+    kcoords = ref_data.kcoords
     num_k = length(kcoords)
 
     function define_ylims(data, εF)
@@ -93,13 +93,13 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     end
 
     # Needed by DFTK.
-    occupation_threshold = DFTK.default_occupation_threshold()
+    fermialg=DFTK.default_fermialg(band_data_ref.basis.model)
     
     # Reference
-    εF = DFTK.compute_occupation(band_data_ref.basis, band_data_ref.λ;
-                                 occupation_threshold).εF
+    εF = DFTK.compute_occupation(band_data_ref.basis, band_data_ref.λ,
+                                 fermialg).εF
     λ_ref = [λk .- εF for λk in band_data_ref.λ]
-    p_ref = DFTK.plot_band_data(band_data_ref; εF=εF, kpath.klabels,
+    p_ref = DFTK.plot_band_data(kcoords, band_data_ref; εF=εF,
                                 linewitdh=1.2, linecolor=:black)
     ylims!(p_ref, define_ylims(band_data_ref, εF))
     plot!(p_ref, size=(500,500))
@@ -107,10 +107,11 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     xlabel!(p_ref," ")
 
     # Standard
-    εF = DFTK.compute_occupation(band_data_std.basis, band_data_std.λ;
-                                 occupation_threshold).εF
+    εF = DFTK.compute_occupation(band_data_std.basis, band_data_std.λ,
+                                 fermialg).εF
+
     λ_std = [λk .- εF for λk in band_data_std.λ]
-    p_std = DFTK.plot_band_data(band_data_std; εF=εF, kpath.klabels)
+    p_std = DFTK.plot_band_data(kcoords, band_data_std; εF=εF)
     plot!(p_std, size=(500,500))
     ylims!(p_std, define_ylims(band_data_std, εF))
     xlabel!(p_std, " ")
@@ -118,10 +119,11 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     title!(p_std,L"\mathrm{Standard\; kinetic\; term}")
 
     # Modified
-    εF = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ;
-                                 occupation_threshold).εF
+    εF = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ,
+                                 fermialg).εF
+
     λ_mod = [λk .- εF for λk in band_data_mod.λ]
-    p_mod = DFTK.plot_band_data(band_data_mod; εF, kpath.klabels)
+    p_mod = DFTK.plot_band_data(kcoords, band_data_mod; εF)
     plot!(p_mod, size=(500,500))
     ylims!(p_mod, define_ylims(band_data_mod, εF))
     ylabel!(p_mod, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
@@ -153,6 +155,7 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     end
 
     p_ref, p_std, p_mod, p_err
+    
 end
 
 function merge_band_plots(p_ref, p_std, p_mod)
@@ -188,13 +191,12 @@ end
 
 function compute_axis_attributes(path_section, num_k, ref_data)
     # k point as 1D axis coordinates
-    tmp_plot = DFTK.plot_band_data(ref_data.band_data; ref_data.scfres.εF,
-                                   ref_data.kpath.klabels)
+    tmp_plot = DFTK.plot_band_data(ref_data.kcoords, ref_data.band_data; ref_data.scfres.εF)
     ticks = only(xticks(tmp_plot))
 
     # Starting and end point coordinates
-    k_start = ticks[1][findfirst(x->contains(x, path_section[1]), ticks[2])]
-    k_end = ticks[1][findfirst(x->contains(x, path_section[2]), ticks[2])]
+    k_start = ticks[1][findfirst(x->contains(x, String(path_section[1])), ticks[2])]
+    k_end = ticks[1][findfirst(x->contains(x, String(path_section[2])), ticks[2])]
     # Axis
     x_axis = LinRange(k_start, k_end, num_k)
 
@@ -260,7 +262,7 @@ function plot_band(band_ref, band_std, bands_mod;
     plot!(p, size=(500,500), legend=:bottomleft)
     ylabel!(p, "Eigenvalues (hartree)")
     xlabel!(p, L"\mathbf{k}"*"-point")
-    xticks!(p, [k_start, k_end], path_section)
+    xticks!(p, [k_start, k_end], String.(path_section))
     !isempty(plot_dir) && (savefig(p,
                            joinpath(plot_dir, "band_$(n)_dev_$(i_derivative)_"*
                                     "$(path_section[1])_$(path_section[2]).pdf"))

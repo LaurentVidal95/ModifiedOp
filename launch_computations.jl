@@ -25,7 +25,6 @@ All functions are defined in the `utils` directory.
 include("include_utils.jl")
 
 # Set general parameters, OK for both systems
-n_bands = 8
 Ecut = 5
 
 # Define blow-up
@@ -34,16 +33,17 @@ blowup_rate = 3//2
 blowup = VariableBlowupCHV(blowup_rate; interval)
 
 # Define system
-silicon = silicon_PBE(; Ecut_ref=20, n_bands, kgrid=[10,10,10])
-graphene = graphene_PBE(; Ecut_ref=20, kshift=zeros(3), n_bands, kgrid=[12,12,1])
+silicon = silicon_PBE(; Ecut_ref=20, kgrid=[10,10,10])
+graphene = graphene_PBE(; Ecut_ref=20, kshift=zeros(3), kgrid=[12,12,1])
 
 # Now only launch in terminal the following function
 function launch_computations(system, blowup; bandplot_res=200, single_band_res=2000,
-                             output_dir="", Ecut, n_bands)
+                             output_dir="", Ecut)
     # Compute reference band with large Ecut
     @info "Computing reference ground state density"
     ref_data = reference_data(system; k_path_res=bandplot_res)
-
+    n_bands = ref_data.scfres.n_bands_converge
+    
     # Compute bands for low Ecut with standard and modified kinetic term
     # May be a time consuming step
     bandplot_data = bandstructure_data(Ecut, n_bands, blowup; ref_data, interval)
@@ -67,7 +67,7 @@ function launch_computations(system, blowup; bandplot_res=200, single_band_res=2
     tol = 1e-12                           # Tolerance for the eigensolver for the Hk
     maxiter = 200                         # max_iterations for lobpcg solver. default=100.
     blow_up_rates = [1/2, 3/2, 5/2]       # All blow-up rates to test
-
+    
     # Reference fft grid so that every one has the same reference ground state density.
     ref_fft_size = ref_data.scfres.basis.fft_size
 
@@ -101,6 +101,9 @@ function launch_computations(system, blowup; bandplot_res=200, single_band_res=2
               ref_data, plot_dir, i_derivative=1, n)
     plot_band(band_ref_data, band_std_data, bands_mod_data;
               ref_data, plot_dir, i_derivative=2, n)
+
+    # debug
+    band_ref_data, band_std_data, bands_mod_data
 end
 
 ## EXAMPLES: launch computation for silicon

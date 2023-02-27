@@ -8,8 +8,8 @@ LDA_terms(KinteticTerm) = [KineticTerm, AtomicLocal(), AtomicNonLocal(),
 """
 Graphene
 """
-function graphene_PBE(; n_bands=13, Ecut_ref=15,
-                      temperature=1e-3, smearing=Smearing.Gaussian(),
+function graphene_PBE(; Ecut_ref=15, temperature=1e-3,
+                      smearing=Smearing.Gaussian(),
                       basis_kwargs...)
     # Lattice constant of graphene in bohr
     a = austrip(1u"Å")*2.641 
@@ -41,18 +41,18 @@ function graphene_PBE(; n_bands=13, Ecut_ref=15,
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_graphene(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a)
+    function scf_graphene(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a)
         basis = basis_PBE_graphene(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
-        self_consistent_field(basis, n_bands=n_bands);
+        self_consistent_field(basis)
     end
     (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene,
-     name="graphene_PBE", path_section=["M","K"], n=2)
+     name="graphene_PBE", path_section=[:M,:K], n=2)
 end
 
 """
 Silicon
 """
-function silicon_PBE(;n_bands=8, Ecut_ref=15,
+function silicon_PBE(;Ecut_ref=15,
                      temperature=1e-3, smearing=Smearing.Gaussian(),
                      basis_kwargs...)
     # Lattice constant of silicon in bohr
@@ -81,12 +81,12 @@ function silicon_PBE(;n_bands=8, Ecut_ref=15,
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_silicon(;n_bands=n_bands, KineticTerm=Kinetic(), Ecut=Ecut_ref, a=10.26)
+    function scf_silicon(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=10.26)
         basis = basis_PBE_silicon(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
-        self_consistent_field(basis, n_bands=n_bands);
+        self_consistent_field(basis)
     end
     (;scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon,
-     name="silicon_PBE", path_section=["X","U"], n=1)
+     name="silicon_PBE", path_section=[:X,:U], n=1)
 end
 
 # """
