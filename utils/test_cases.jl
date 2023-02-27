@@ -41,9 +41,10 @@ function graphene_PBE(; Ecut_ref=15, temperature=1e-3,
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_graphene(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a)
+    function scf_graphene(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a, n_bands)
         basis = basis_PBE_graphene(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
-        self_consistent_field(basis)
+        nbandsalg=DFTK.FixedBands(; n_bands_converge=n_bands)
+        self_consistent_field(basis; nbandsalg)
     end
     (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene,
      name="graphene_PBE", path_section=[:M,:K], n=2)
@@ -81,9 +82,10 @@ function silicon_PBE(;Ecut_ref=15,
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_silicon(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=10.26)
+    function scf_silicon(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=10.26, n_bands)
         basis = basis_PBE_silicon(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
-        self_consistent_field(basis)
+        nbandsalg=DFTK.FixedBands(; n_bands_converge=n_bands)
+        self_consistent_field(basis; nbandsalg)
     end
     (;scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon,
      name="silicon_PBE", path_section=[:X,:U], n=1)

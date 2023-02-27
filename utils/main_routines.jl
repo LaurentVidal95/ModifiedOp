@@ -3,9 +3,9 @@ Compute ground state density using a big Ecut. This density is used to compute
 the effective potential of H_k is every following computations.
 Also generates the standard band plot k-path for the given system.
 """
-function reference_data(system; k_path_res=200)
+function reference_data(system; k_path_res=200, n_bands=8)
     # Launch scf with standard kinetic term
-    scfres_ref = system.scf()
+    scfres_ref = system.scf(; n_bands)
 
     # Remove extra band (added for convergence)
     n_bands = scfres_ref.n_bands_converge
