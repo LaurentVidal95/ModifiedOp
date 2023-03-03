@@ -26,6 +26,7 @@ include("include_utils.jl")
 
 # Set general parameters, OK for both systems
 Ecut = 5
+n_bands = 8
 
 # Define blow-up
 interval = [0.85, 0.90] # interpolation interval
@@ -38,10 +39,10 @@ graphene = graphene_PBE(; Ecut_ref=20, kshift=zeros(3), kgrid=[12,12,1])
 
 # Now only launch in terminal the following function
 function launch_computations(system, blowup; bandplot_res=200, single_band_res=2000,
-                             output_dir="", Ecut)
+                             output_dir="", Ecut, n_bands=8)
     # Compute reference band with large Ecut
     @info "Computing reference ground state density"
-    ref_data = reference_data(system; k_path_res=bandplot_res)
+    ref_data = reference_data(system; k_path_res=bandplot_res, n_bands)
     n_bands = ref_data.scfres.n_bands_converge
     
     # Compute bands for low Ecut with standard and modified kinetic term
@@ -102,8 +103,12 @@ function launch_computations(system, blowup; bandplot_res=200, single_band_res=2
     plot_band(band_ref_data, band_std_data, bands_mod_data;
               ref_data, plot_dir, i_derivative=2, n)
 
+    # DEBUG print fermi-levels
+    εF_std = bandplot_data.std_data.εF
+    εF_mod = bandplot_data.mod_data.εF
+
     # debug
-    band_ref_data, band_std_data, bands_mod_data
+    band_ref_data, band_std_data, bands_mod_data, εF_std, εF_mod
 end
 
 ## EXAMPLES: launch computation for silicon

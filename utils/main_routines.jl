@@ -48,8 +48,12 @@ function bandstructure_data(Ecut::T, n_bands::Int64, blowup;
     εn_std = n->[εnk[n] for εnk in band_data_std.λ]
     εn_mod = n->[εnk[n] for εnk in band_data_mod.λ]
 
+    # Compute Fermi-Levels
+    εF_std = DFTK.compute_occupation(band_data_std.basis, band_data_std.λ).εF
+    εF_mod = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ).εF
+    
     # Return ref_data and mod_data
-    (;std_data=(band_data_std, εn_std), mod_data=(band_data_mod, εn_mod))
+    (;std_data=(band_data_std, εn_std, εF_std), mod_data=(band_data_mod, εn_mod, εF_mod))
 end
 
 function extract_blowup_rate(model)
@@ -62,8 +66,7 @@ extract_blowup_rate(basis::PlaneWaveBasis) = extract_blowup_rate(basis.model)
 function focus_on_band(n, basis_in; ref_data,
                        num_k=100, path_section=ref_data.kpath.paths[1][1:2],
                        tol=1e-4,
-                       maxiter=200,
-                       debug=5)
+                       maxiter=200)
     # Compute zone to zoom on
     kpath = ref_data.kpath
     k_start_label, k_end_label = path_section
@@ -82,35 +85,57 @@ function focus_on_band(n, basis_in; ref_data,
 
     # Plot finite diff derivatives
     # Put in plot directly...
-    subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
-    tmp_εn, tmp_kcoords = subset.((εn, kcoords), Ref(debug))
-    ∂εn = band_derivative(tmp_εn, tmp_kcoords)
-    ∂2εn = band_derivative(∂εn, tmp_kcoords)
+    # subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
+    # DEBUG # tmp_εn, tmp_kcoords = subset.((εn, kcoords), Ref(debug))
+    ∂εn = band_derivative(εn, kcoords)
+    ∂2εn = band_derivative(∂εn, kcoords)
 
     (;path_section, data=(band_data, εn, ∂εn, ∂2εn))
 end
 
 # Work in progress to compare density of state
-function plot_dos_perso(data)
-    basis = data[1][1]
-    eigenvalues = data[1][2]
-    εF = DFTK.fermi_level(basis, eigenvalues)
-    plot_dos(basis, eigenvalues; εF)
-end
+# function plot_dos_perso(data)
+#     basis = data[1][1]
+#     eigenvalues = data[1][2]
+#     εF = DFTK.fermi_level(basis, eigenvalues)
+#     plot_dos(basis, eigenvalues; εF)
+# end
 
-function compare_dos(plot_data; ref_data)
-    function compute_idos(band_data)
-        basis = band_data.basis
-        eigenvalues = band_data.λ        
-        n_spin = basis.model.n_spin_components
-        εs = range(minimum(minimum(eigenvalues)) - .5,
-                   maximum(maximum(eigenvalues)) + .5, length=1000)
-        Dεs = compute_dos.(εs, Ref(basis), Ref(eigenvalues))
-        D = []
-        for σ in 1:n_spin
-            push!(D, [Dσ[σ] for Dσ in Dεs])
-        end
-        D
+# function compare_dos(plot_data; ref_data)
+#     function compute_idos(band_data)
+#         basis = band_data.basis
+#         eigenvalues = band_data.λ        
+#         n_spin = basis.model.n_spin_components
+#         εs = range(minimum(minimum(eigenvalues)) - .5,
+#                    maximum(maximum(eigenvalues)) + .5, length=1000)
+#         Dεs = compute_dos.(εs, Ref(basis), Ref(eigenvalues))
+#         D = []
+#         for σ in 1:n_spin
+#             push!(D, [Dσ[σ] for Dσ in Dεs])
+#         end
+#         D
+#     end
+#     compute_idos.([plot_data.std_data[1], plot_data.mod_data[1], ref_data.band_data])
+# end
+
+# DEBUG
+function compute_fermi_levels(blowup_rates, Ecut::T, n_bands::Int64;
+                       ref_data, interval=DefaultInterval,
+                       tol=1e-10) where {T<:Real}
+
+    @info "Compute modified kinetic terms bands for low Ecut = $Ecut"
+    ref_fft_size = ref_data.scfres.basis.fft_size
+    kcoords = ref_data.kcoords
+    ρ_ref = ref_data.scfres.ρ
+
+    # Same for each blowup
+    εF_list = []
+    for blowup_rate in blowup_rates
+        blowup = VariableBlowupCHV(blowup_rate; interval)
+        basis = ref_data.system.basis(Kinetic(;blowup), Ecut=Ecut, fft_size=ref_fft_size)        
+        band_data_mod = compute_bands(basis, kcoords; n_bands=n_bands, ρ=ρ_ref, tol)
+        εF = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ).εF
+        push!(εF_list, (εF, blowup_rate))
     end
-    compute_idos.([plot_data.std_data[1], plot_data.mod_data[1], ref_data.band_data])
+    εF_list
 end

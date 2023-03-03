@@ -96,36 +96,35 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     fermialg=DFTK.default_fermialg(band_data_ref.basis.model)
     
     # Reference
-    εF = DFTK.compute_occupation(band_data_ref.basis, band_data_ref.λ,
+    εF_ref = DFTK.compute_occupation(band_data_ref.basis, band_data_ref.λ,
                                  fermialg).εF
     λ_ref = [λk .- εF for λk in band_data_ref.λ]
-    p_ref = DFTK.plot_band_data(kcoords, band_data_ref; εF=εF,
+    p_ref = DFTK.plot_band_data(kcoords, band_data_ref; εF=εF_ref,
                                 linewitdh=1.2, linecolor=:black)
-    ylims!(p_ref, define_ylims(band_data_ref, εF))
+    ylims!(p_ref, define_ylims(band_data_ref, εF_ref))
     plot!(p_ref, size=(500,500))
     ylabel!(p_ref, L"\varepsilon_{n,k}-\varepsilon_f\;(\mathrm{hartree})")
     xlabel!(p_ref," ")
 
     # Standard
-    εF = DFTK.compute_occupation(band_data_std.basis, band_data_std.λ,
+    εF_std = DFTK.compute_occupation(band_data_std.basis, band_data_std.λ,
                                  fermialg).εF
 
     λ_std = [λk .- εF for λk in band_data_std.λ]
-    p_std = DFTK.plot_band_data(kcoords, band_data_std; εF=εF)
+    p_std = DFTK.plot_band_data(kcoords, band_data_std; εF=εF_std)
     plot!(p_std, size=(500,500))
-    ylims!(p_std, define_ylims(band_data_std, εF))
+    ylims!(p_std, define_ylims(band_data_std, εF_std))
     xlabel!(p_std, " ")
     ylabel!(p_std, L"\varepsilon_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
     title!(p_std,L"\mathrm{Standard\; kinetic\; term}")
 
     # Modified
-    εF = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ,
+    εF_mod = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ,
                                  fermialg).εF
-
     λ_mod = [λk .- εF for λk in band_data_mod.λ]
-    p_mod = DFTK.plot_band_data(kcoords, band_data_mod; εF)
+    p_mod = DFTK.plot_band_data(kcoords, band_data_mod; εF_mod)
     plot!(p_mod, size=(500,500))
-    ylims!(p_mod, define_ylims(band_data_mod, εF))
+    ylims!(p_mod, define_ylims(band_data_mod, εF_mod))
     ylabel!(p_mod, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")
     title!(p_mod,"Modified kinetic term")
 
@@ -155,7 +154,7 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     end
 
     p_ref, p_std, p_mod, p_err
-    
+
 end
 
 function merge_band_plots(p_ref, p_std, p_mod)
