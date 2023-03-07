@@ -78,7 +78,7 @@ function silicon_PBE(;Ecut_ref=15,
     # Construct a plane-wave basis given a kinetic term using model_PBE_silicon
     function basis_PBE_silicon(KineticTerm; Ecut=Ecut_ref, a=10.26, basis_kwargs...)
         model = model_PBE_silicon(KineticTerm, a=a)
-        PlaneWaveBasis(model; Ecut=Ecut, basis_kwargs...)
+        PlaneWaveBasis(model; Ecut, basis_kwargs...)
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.

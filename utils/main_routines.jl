@@ -93,6 +93,67 @@ function focus_on_band(n, basis_in; ref_data,
     (;path_section, data=(band_data, εn, ∂εn, ∂2εn))
 end
 
+# Compute Fermi levels for band diagrams corresponding to the given
+# blowup rates.
+function compute_fermi_levels(blowup_rates, Ecut::T, n_bands::Int64;
+                       ref_data, interval=DefaultInterval,
+                       tol=1e-10) where {T<:Real}
+
+    @info "Compute modified kinetic terms bands for low Ecut = $Ecut"
+    ref_fft_size = ref_data.scfres.basis.fft_size
+    kcoords = ref_data.kcoords
+    ρ_ref = ref_data.scfres.ρ
+
+    # Same for each blowup
+    εF_list = []
+    for blowup_rate in blowup_rates
+        blowup = VariableBlowupCHV(blowup_rate; interval)
+        basis = ref_data.system.basis(Kinetic(;blowup), Ecut=Ecut, fft_size=ref_fft_size)        
+        band_data_mod = compute_bands(basis, kcoords; n_bands=n_bands, ρ=ρ_ref, tol)
+        εF = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ).εF
+        push!(εF_list, (εF, blowup_rate))
+    end
+    εF_list
+end
+
+function test_eigensolver(Ecuts::Vector{T}, blowuprate::T, n_bands::TI;
+                          ref_data, inteval=DefaultInterval, tol=1e-10,
+                          ) where {T<:Real, TI<:Int}
+    # Extract ref data
+    basis_ref = ref_data.scfres.basis
+    fft_size = basis_ref.fft_size
+    @assert findmax(Ecuts)[1] ≤ basis_ref.Ecut "Given Ecuts have to be lower that the "*
+        "reference Ecut."
+    
+    # Choose between standard and modified kinetic term.
+    blowup = DFTK.BlowupIdentity()
+    !isnan(blowuprate) && (blowup = VariableBlowupCHV(blowuprate; interval))
+
+    # Test eigensolver for all given Ecuts    
+    res = Dict{T, Any}()
+    for Ecut in Ecuts
+        @info "Test eigensolver for Ecut=$(Ecut) and blow-up rate $(blowuprate)"
+        basis = ref_data.system.basis(DFTK.Kinetic(;blowup); Ecut, fft_size)
+        H = DFTK.Hamiltonian(basis; ρ = ref_data.scfres.ρ)
+        foo = DFTK.diagonalize_all_kblocks(DFTK.lobpcg_hyper, H, n_bands; tol, maxiter=500)
+        Bk_size = map(X->size(X,1), foo.X) # Store the number of raws of each Hamiltonian Hk
+        res[Ecut] = (; foo.converged, foo.iterations, foo.n_matvec, foo.residual_norms, Bk_size)
+    end
+    res
+end
+function test_eigensolver(Ecuts::Vector{T}, blowuprate::Vector{T}, tols::Vector{T},
+                          n_bands::TI;
+                          ref_data, file="test_eigensolver",
+                          ) where {TI<:Int, T<:Real}
+    data = Dict{T, Any}()
+    for tol in tols
+        data[tol] = test_eigensolver(Ecuts, blowuprate, n_bands; ref_data, tol)
+        # Save data in JSON file
+        open(io->JSON3.write(io, data, allow_inf=true), file*".json", "w")
+    end
+    nothing    
+end
+
 # Work in progress to compare density of state
 # function plot_dos_perso(data)
 #     basis = data[1][1]
@@ -117,25 +178,3 @@ end
 #     end
 #     compute_idos.([plot_data.std_data[1], plot_data.mod_data[1], ref_data.band_data])
 # end
-
-# DEBUG
-function compute_fermi_levels(blowup_rates, Ecut::T, n_bands::Int64;
-                       ref_data, interval=DefaultInterval,
-                       tol=1e-10) where {T<:Real}
-
-    @info "Compute modified kinetic terms bands for low Ecut = $Ecut"
-    ref_fft_size = ref_data.scfres.basis.fft_size
-    kcoords = ref_data.kcoords
-    ρ_ref = ref_data.scfres.ρ
-
-    # Same for each blowup
-    εF_list = []
-    for blowup_rate in blowup_rates
-        blowup = VariableBlowupCHV(blowup_rate; interval)
-        basis = ref_data.system.basis(Kinetic(;blowup), Ecut=Ecut, fft_size=ref_fft_size)        
-        band_data_mod = compute_bands(basis, kcoords; n_bands=n_bands, ρ=ρ_ref, tol)
-        εF = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ).εF
-        push!(εF_list, (εF, blowup_rate))
-    end
-    εF_list
-end
