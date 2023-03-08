@@ -287,14 +287,18 @@ function plot_eigensolver_test(std::String, bu1::String, bu2::String, bu3::Strin
             map(Ecut->sum(file[tol][Ecut].iterations), Ecuts)
         end
         y = Vector(vec(hcat(y...)'))
-        group = repeat(["Standard", "p=1/2", "p=3/2", "p=5/2"], outer=5)
-        p = groupedbar(x, y; group)
+        group = repeat([L"\mathrm{standard}", L"p=1/2", L"p=3/2", L"p=5/2"], outer=5)
+        p = groupedbar(x, y; group,
+                       color=reshape([myblue, mygreen, :brown, :red], 1,4),
+                       linecolor=nothing)
 
         # Plot attributee
-        plot!(legendtitle="Blow-up rate", legend=:topleft)
-        xlabel!("Ecut (Ha)")
-        ylabel!("eigensolver iterations")
-        title!("Effect of discretization strategy on the eigensolver.\n tol=1e-$(-Int64(log10(tol)))")
+        plot!(legend=:topleft, legendtitlefontsize=18) #, legendtitle="Blow-up rate")
+        xlabel!(L"\mathrm{E_c}"*" (Ha)", xguidefontsize=18)
+        ylabel!("Total eigensolver iterations", yguidefontsize=18)
+        log_tol = Int64(log10(tol))
+        plot!(title="Graphene with eigensolver tolerance "*
+              latexstring("10^{$(log_tol)}"), titlefontsize=18)
         plot!(size=(800,800))
 
         # Saveplot
