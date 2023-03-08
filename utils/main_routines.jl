@@ -117,7 +117,7 @@ function compute_fermi_levels(blowup_rates, Ecut::T, n_bands::Int64;
 end
 
 function test_eigensolver(Ecuts::Vector{T}, blowuprate::T, n_bands::TI;
-                          ref_data, inteval=DefaultInterval, tol=1e-10,
+                          ref_data, interval=DefaultInterval, tol=1e-10,
                           ) where {T<:Real, TI<:Int}
     # Extract ref data
     basis_ref = ref_data.scfres.basis
@@ -132,7 +132,7 @@ function test_eigensolver(Ecuts::Vector{T}, blowuprate::T, n_bands::TI;
     # Test eigensolver for all given Ecuts    
     res = Dict{T, Any}()
     for Ecut in Ecuts
-        @info "Test eigensolver for Ecut=$(Ecut) and blow-up rate $(blowuprate)"
+        @info "Test eigensolver for Ecut=$(Ecut), tol=$(tol) and blow-up rate $(blowuprate)"
         basis = ref_data.system.basis(DFTK.Kinetic(;blowup); Ecut, fft_size)
         H = DFTK.Hamiltonian(basis; ρ = ref_data.scfres.ρ)
         foo = DFTK.diagonalize_all_kblocks(DFTK.lobpcg_hyper, H, n_bands; tol, maxiter=500)
@@ -141,7 +141,7 @@ function test_eigensolver(Ecuts::Vector{T}, blowuprate::T, n_bands::TI;
     end
     res
 end
-function test_eigensolver(Ecuts::Vector{T}, blowuprate::Vector{T}, tols::Vector{T},
+function test_eigensolver(Ecuts::Vector{T}, blowuprate::T, tols::Vector{T},
                           n_bands::TI;
                           ref_data, file="test_eigensolver",
                           ) where {TI<:Int, T<:Real}

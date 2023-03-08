@@ -1,12 +1,10 @@
-using Pkg;
-Pkg.activate("./");
-
 # SCF
 using DFTK
 using LinearAlgebra
 
 # Plots
 using Plots, Measures
+using StatsPlots
 using Unitful, UnitfulAtomic
 using DelimitedFiles
 using LaTeXStrings

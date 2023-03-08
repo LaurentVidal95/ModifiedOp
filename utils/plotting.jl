@@ -268,3 +268,37 @@ function plot_band(band_ref, band_std, bands_mod;
                           )                          
     p, (x_axis, k_start, k_end)
 end
+
+function plot_eigensolver_test(std::String, bu1::String, bu2::String, bu3::String;
+                               outputdir)
+    # Create export dir if needed
+    !isdir(outputdir) && mkdir(outputdir)
+
+    # Extract raw data
+    data = open.(Ref(JSON3.read), [std, bu1, bu2, bu3])
+    tols = parse.(Float64, String.(collect(keys(data[1]))))
+    Ecuts = sort(parse.(Float64, String.(collect(keys(data[1][tols[1]])))))
+
+    # Gather all data for given tol
+    x = repeat(["05","10","20","40","80"], inner=4)
+    p_tot = plot()
+    for tol in tols
+        y = map(data) do file
+            map(Ecut->sum(file[tol][Ecut].iterations), Ecuts)
+        end
+        y = Vector(vec(hcat(y...)'))
+        group = repeat(["Standard", "p=1/2", "p=3/2", "p=5/2"], outer=5)
+        p = groupedbar(x, y; group)
+
+        # Plot attributee
+        plot!(legendtitle="Blow-up rate", legend=:topleft)
+        xlabel!("Ecut (Ha)")
+        ylabel!("eigensolver iterations")
+        title!("Effect of discretization strategy on the eigensolver.\n tol=1e-$(-Int64(log10(tol)))")
+        plot!(size=(800,800))
+
+        # Saveplot
+        savefig(p, outputdir*"/tol_1em$(-Int64(log10(tol))).pdf")
+    end
+    nothing
+end
