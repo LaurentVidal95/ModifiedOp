@@ -15,11 +15,12 @@ rough parameters (computation takes 1min max) define an output directory "../sil
 call in terminal:
 
 ``
+mkdir("../silicon")
 launch_computations(silicon, blowup; bandplot_res=50, single_band_res=100, output_dir="../silicon",
 Ecut, n_bands)
 ``
 
-All functions are defined in the `utils` directory.
+All routines are defined in the `utils` directory.
 """
 
 include("include_utils.jl")
@@ -30,7 +31,7 @@ n_bands = 8
 
 # Define blow-up
 interval = [0.85, 0.90] # interpolation interval
-blowup_rate = 3//2
+blowup_rate = 3//2      # blow-rate of the blow-up function at 1⁻
 blowup = VariableBlowupCHV(blowup_rate; interval)
 
 # Define system
@@ -41,7 +42,7 @@ graphene = graphene_PBE(; Ecut_ref=20, kshift=zeros(3), kgrid=[12,12,1])
 function launch_computations(system, blowup; bandplot_res=200, single_band_res=2000,
                              output_dir="", Ecut, n_bands=8)
     # Compute reference band with large Ecut
-    @info "Computing reference ground state density"
+    @info "Computing reference ground state density with an SCF routine"
     ref_data = reference_data(system; k_path_res=bandplot_res, n_bands)
     n_bands = ref_data.scfres.n_bands_converge
     
@@ -102,18 +103,5 @@ function launch_computations(system, blowup; bandplot_res=200, single_band_res=2
               ref_data, plot_dir, i_derivative=1, n)
     plot_band(band_ref_data, band_std_data, bands_mod_data;
               ref_data, plot_dir, i_derivative=2, n)
-
-    # DEBUG print fermi-levels
-    εF_std = bandplot_data.std_data.εF
-    εF_mod = bandplot_data.mod_data.εF
-
-    # debug
-    band_ref_data, band_std_data, bands_mod_data, εF_std, εF_mod
+    nothing
 end
-
-## EXAMPLES: launch computation for silicon
-## bandplot_res and single_band_res have been set to avoid long computation time.
-## The results of the paper are displayed for bandplot_res=300 and single_band_res=4000.
-
-# mkdir("../test")
-# launch_computations(silicon, blowup; bandplot_res=100, single_band_res=100, output_dir="../test", Ecut, n_bands)

@@ -98,7 +98,7 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     # Reference
     εF_ref = DFTK.compute_occupation(band_data_ref.basis, band_data_ref.λ,
                                  fermialg).εF
-    λ_ref = [λk .- εF for λk in band_data_ref.λ]
+    λ_ref = [λk .- εF_ref for λk in band_data_ref.λ]
     p_ref = DFTK.plot_band_data(kcoords, band_data_ref; εF=εF_ref,
                                 linewitdh=1.2, linecolor=:black)
     ylims!(p_ref, define_ylims(band_data_ref, εF_ref))
@@ -107,10 +107,8 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     xlabel!(p_ref," ")
 
     # Standard
-    εF_std = DFTK.compute_occupation(band_data_std.basis, band_data_std.λ,
-                                 fermialg).εF
-
-    λ_std = [λk .- εF for λk in band_data_std.λ]
+    εF_std = plot_data.std_data[3]
+    λ_std = [λk .- εF_std for λk in band_data_std.λ]
     p_std = DFTK.plot_band_data(kcoords, band_data_std; εF=εF_std)
     plot!(p_std, size=(500,500))
     ylims!(p_std, define_ylims(band_data_std, εF_std))
@@ -119,9 +117,8 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     title!(p_std,L"\mathrm{Standard\; kinetic\; term}")
 
     # Modified
-    εF_mod = DFTK.compute_occupation(band_data_mod.basis, band_data_mod.λ,
-                                 fermialg).εF
-    λ_mod = [λk .- εF for λk in band_data_mod.λ]
+    εF_mod = plot_data.mod_data[3]
+    λ_mod = [λk .- εF_mod for λk in band_data_mod.λ]
     p_mod = DFTK.plot_band_data(kcoords, band_data_mod; εF_mod)
     plot!(p_mod, size=(500,500))
     ylims!(p_mod, define_ylims(band_data_mod, εF_mod))

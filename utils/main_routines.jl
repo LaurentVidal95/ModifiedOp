@@ -11,7 +11,7 @@ function reference_data(system; k_path_res=200, n_bands=8)
     n_bands = scfres_ref.n_bands_converge
     kpath = irrfbz_path(scfres_ref.basis.model)
     kcoords = DFTK.Brillouin.interpolate(kpath, density=k_path_res)
-    @show length(kcoords)
+
     @info "Computing reference band structure"
     band_data = compute_bands(scfres_ref.basis, kcoords;
                               n_bands, ρ = scfres_ref.ρ, 
@@ -153,28 +153,3 @@ function test_eigensolver(Ecuts::Vector{T}, blowuprate::T, tols::Vector{T},
     end
     nothing    
 end
-
-# Work in progress to compare density of state
-# function plot_dos_perso(data)
-#     basis = data[1][1]
-#     eigenvalues = data[1][2]
-#     εF = DFTK.fermi_level(basis, eigenvalues)
-#     plot_dos(basis, eigenvalues; εF)
-# end
-
-# function compare_dos(plot_data; ref_data)
-#     function compute_idos(band_data)
-#         basis = band_data.basis
-#         eigenvalues = band_data.λ        
-#         n_spin = basis.model.n_spin_components
-#         εs = range(minimum(minimum(eigenvalues)) - .5,
-#                    maximum(maximum(eigenvalues)) + .5, length=1000)
-#         Dεs = compute_dos.(εs, Ref(basis), Ref(eigenvalues))
-#         D = []
-#         for σ in 1:n_spin
-#             push!(D, [Dσ[σ] for Dσ in Dεs])
-#         end
-#         D
-#     end
-#     compute_idos.([plot_data.std_data[1], plot_data.mod_data[1], ref_data.band_data])
-# end
