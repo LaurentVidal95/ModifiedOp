@@ -293,12 +293,13 @@ function plot_eigensolver_test(std::String, bu1::String, bu2::String, bu3::Strin
                        linecolor=nothing)
 
         # Plot attributee
-        plot!(legend=:topleft, legendtitlefontsize=18) #, legendtitle="Blow-up rate")
-        xlabel!(L"\mathrm{E_c}"*" (Ha)", xguidefontsize=18)
-        ylabel!("Total eigensolver iterations", yguidefontsize=18)
+        plot!(legend=:topleft, legendtitlefontsize=22,
+              legendfontsize=20) #, legendtitle="Blow-up rate")        
+        xlabel!(L"\mathrm{E_c}"*" (Ha)", xguidefontsize=22)
+        ylabel!("Total eigensolver iterations", yguidefontsize=22)
         log_tol = Int64(log10(tol))
-        plot!(title="Graphene with eigensolver tolerance "*
-              latexstring("10^{$(log_tol)}"), titlefontsize=18)
+        plot!(title="Eigensolver tolerance : "*
+              latexstring("10^{$(log_tol)}"), titlefontsize=22)
         plot!(size=(800,800))
 
         # Saveplot
