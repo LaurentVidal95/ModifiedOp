@@ -5,7 +5,7 @@ Defines a blow-up function 𝒢 with custom blow-up parameter p. It is defined a
 Let ``I = [x₁, x₂]⊂(1/2,1)`` be an given interval. Define ``𝒽(x) = C(a,p)(1-x)^{-p}``
 with ``C(a,p) = (3/2)a²(1-a)ᵖ``. The function ``𝒢`` is such that:
 
-  •  ``𝒢(x) = x²``  on ``[0,\frac{1}{2})``
+  •  ``𝒢(x) = x²``  on ``[0,1/2)``
   •  ``𝒢(x) = 𝒽(x)`` on ``(x₂,1)``
   • The value of 𝒢 on I is obtained by a the smooth interpolation ``itp(x) = (1-step(x))x² + step(x)𝒽(x)``
     with `` step(x) = f((x-x₁)/(x₂-x₁)) / (f((x-x₁)/(x₂-x₁)) + f(1-(x-x₁)/(x₂-x₁)))``, ``f(x) = e^{-1/x}``.
