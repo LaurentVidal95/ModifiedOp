@@ -105,6 +105,7 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     plot!(p_ref, size=(500,500))
     ylabel!(p_ref, L"\varepsilon_{n,k}-\varepsilon_f\;(\mathrm{hartree})")
     xlabel!(p_ref," ")
+    title!(p_ref,"Reference band diagram")
 
     # Standard
     εF_std = plot_data.std_data[3]
@@ -119,7 +120,7 @@ function plot_bandstructures(plot_data; ref_data, plot_dir="")
     # Modified
     εF_mod = plot_data.mod_data[3]
     λ_mod = [λk .- εF_mod for λk in band_data_mod.λ]
-    p_mod = DFTK.plot_band_data(kcoords, band_data_mod; εF_mod)
+    p_mod = DFTK.plot_band_data(kcoords, band_data_mod; εF=εF_mod)
     plot!(p_mod, size=(500,500))
     ylims!(p_mod, define_ylims(band_data_mod, εF_mod))
     ylabel!(p_mod, L"\tilde{\varepsilon}_{n,k}^{E_c}-\varepsilon_f\;(\mathrm{hartree})")

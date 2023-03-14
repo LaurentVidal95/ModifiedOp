@@ -26,10 +26,10 @@ All routines are defined in the `utils` directory.
 include("include_utils.jl")
 
 # Set general parameters, OK for both systems
-Ecut = 5
-n_bands = 8
+Test_parameters = (bandplot_res=50, single_band_res=100, Ecut=5, n_bands=8)
+Paper_parameters = (bandplot_res=300, single_band_res=4000, Ecut=5, n_bands=8)
 
-# Define blow-up
+# Define blow-up with rate 3/2.
 interval = [0.85, 0.90] # interpolation interval
 blowup_rate = 3//2      # blow-rate of the blow-up function at 1⁻
 blowup = VariableBlowupCHV(blowup_rate; interval)
