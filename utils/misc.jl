@@ -1,5 +1,5 @@
 """
-Generate k-points cartesian coordinates given starting point, end point,
+Generate k-points coordinates given starting point, end point,
 and the number of wanted k-points.
 """
 function generate_kpath(k_start, k_end, num_k)

@@ -29,13 +29,13 @@ include("include_utils.jl")
 Test_parameters = (bandplot_res=50, single_band_res=100, Ecut=5, n_bands=8)
 Paper_parameters = (bandplot_res=300, single_band_res=4000, Ecut=5, n_bands=8)
 
-# Define blow-up with rate 3/2.
+# Define blow-up with rate 5/4.
 interval = [0.85, 0.90] # interpolation interval
-blowup_rate = 3//2      # blow-rate of the blow-up function at 1⁻
+blowup_rate = 5/4      # blow-rate of the blow-up function at 1⁻
 blowup = VariableBlowupCHV(blowup_rate; interval)
 
 # Define system
-silicon = silicon_PBE(; Ecut_ref=20, kgrid=[10,10,10])
+silicon = silicon_PBE(; Ecut_ref=12.5, kgrid=[5,5,5])
 graphene = graphene_PBE(; Ecut_ref=20, kshift=zeros(3), kgrid=[12,12,1])
 
 # Now only launch in terminal the following function

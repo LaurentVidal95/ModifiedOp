@@ -12,10 +12,10 @@ function graphene_PBE(; Ecut_ref=15, temperature=1e-3,
                       smearing=Smearing.Gaussian(),
                       basis_kwargs...)
     # Lattice constant of graphene in bohr
-    a = austrip(1u"Å")*2.641 
+    a₀ = austrip(1u"Å")*2.641 
 
     # Defines graphene structure and hamiltonian terms
-    function model_PBE_graphene(KineticTerm; a=a)
+    function model_PBE_graphene(KineticTerm; a=a₀)
         # Define lattice
         a_1 = [a; 0; 0];
         rot_120_deg = [-1/2   -√3/2   0;
@@ -35,32 +35,31 @@ function graphene_PBE(; Ecut_ref=15, temperature=1e-3,
     end
 
     # Construct a plane-wave basis given a kinetic term using model_PBE_graphene
-    function basis_PBE_graphene(KineticTerm; Ecut=Ecut_ref, a=a, basis_kwargs...)
-        model = model_PBE_graphene(KineticTerm, a=a)
+    function basis_PBE_graphene(KineticTerm; Ecut=Ecut_ref, a=a₀, basis_kwargs...)
+        model = model_PBE_graphene(KineticTerm; a)
         PlaneWaveBasis(model; Ecut=Ecut, basis_kwargs...)
     end
 
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_graphene(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a, n_bands)
-        basis = basis_PBE_graphene(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
+    function scf_graphene(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a₀, n_bands,
+                          scf_kwargs...)
+        basis = basis_PBE_graphene(KineticTerm; Ecut, a, basis_kwargs...)
         nbandsalg=DFTK.FixedBands(; n_bands_converge=n_bands)
-        self_consistent_field(basis; nbandsalg)
+        self_consistent_field(basis; nbandsalg, scf_kwargs...)
     end
-    (;scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene,
+    (;a₀, scf=scf_graphene, basis=basis_PBE_graphene, model=model_PBE_graphene,
      name="graphene_PBE", path_section=[:M,:K], n=2)
 end
 
 """
 Silicon
 """
-function silicon_PBE(;Ecut_ref=15,
-                     temperature=1e-3, smearing=Smearing.Gaussian(),
-                     basis_kwargs...)
+function silicon_PBE(;Ecut_ref=15, basis_kwargs...)
     # Lattice constant of silicon in bohr
-    a=10.26
+    a₀=10.26
 
     # Defines silicon structure and hamiltonian terms
-    function model_PBE_silicon(KineticTerm; a=a)
+    function model_PBE_silicon(KineticTerm; a=a₀)
         lattice = a / 2 * [[0 1 1.];
                            [1 0 1.];
                            [1 1 0.]]
@@ -71,22 +70,21 @@ function silicon_PBE(;Ecut_ref=15,
         model_name = (KineticTerm.blowup isa VariableBlowupCHV) ? "ModifiedKinetic" : "custom"
         # (KineticTerm isa ModifiedKinetic) && (model_name="ModifiedKinetic")
         Model(lattice, atoms, positions; terms=PBE_terms(KineticTerm),
-              model_name=model_name,
-              temperature, smearing)
+              model_name=model_name)
     end
 
     # Construct a plane-wave basis given a kinetic term using model_PBE_silicon
-    function basis_PBE_silicon(KineticTerm; Ecut=Ecut_ref, a=10.26, basis_kwargs...)
-        model = model_PBE_silicon(KineticTerm, a=a)
+    function basis_PBE_silicon(KineticTerm; Ecut=Ecut_ref, a=a₀, basis_kwargs...)
+        model = model_PBE_silicon(KineticTerm; a)
         PlaneWaveBasis(model; Ecut, basis_kwargs...)
     end
-
     # Scf using the above functions.Sets the defaut Ecut, number of kpoints and bands.
-    function scf_silicon(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=10.26, n_bands)
-        basis = basis_PBE_silicon(KineticTerm; Ecut=Ecut, a=a, basis_kwargs...)
+    function scf_silicon(;KineticTerm=Kinetic(), Ecut=Ecut_ref, a=a₀, n_bands,
+                         scf_kwargs...)
+        basis = basis_PBE_silicon(KineticTerm; Ecut, a, basis_kwargs...)
         nbandsalg=DFTK.FixedBands(; n_bands_converge=n_bands)
-        self_consistent_field(basis; nbandsalg)
+        self_consistent_field(basis; nbandsalg, scf_kwargs...)
     end
-    (;scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon,
+    (;a₀, scf=scf_silicon, basis=basis_PBE_silicon, model=model_PBE_silicon,
      name="silicon_PBE", path_section=[:X,:U], n=1)
 end

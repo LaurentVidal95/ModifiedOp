@@ -83,10 +83,9 @@ function focus_on_band(n, basis_in; ref_data,
     band_data = compute_bands(basis_in, kcoords, n_bands=n, ρ=ρ_ref, tol=tol, maxiter=maxiter)
     εn = [εnk[n] for εnk in band_data.λ]
 
-    # Plot finite diff derivatives
-    # Put in plot directly...
+    # DEBUG
     # subset(tab, n) = [x for (i,x) in enumerate(tab) if rem(i,n)==0]
-    # DEBUG # tmp_εn, tmp_kcoords = subset.((εn, kcoords), Ref(debug))
+    # tmp_εn, tmp_kcoords = subset.((εn, kcoords), Ref(debug))
     ∂εn = band_derivative(εn, kcoords)
     ∂2εn = band_derivative(∂εn, kcoords)
 

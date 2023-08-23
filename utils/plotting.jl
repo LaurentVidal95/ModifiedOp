@@ -1,5 +1,5 @@
 # Default plot parameters
-pyplot()
+# pyplot()
 myblue=RGB(95/255,133/255,255/255)
 mygreen=RGB(60/255,195/255,26/255)
 default(fontfamily="serif",
