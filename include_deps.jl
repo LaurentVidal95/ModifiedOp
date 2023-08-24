@@ -11,8 +11,13 @@ using LaTeXStrings
 # Misc
 using StaticArrays
 using JSON3
+using ProgressMeter
+using Printf
+
 # g function
 using ForwardDiff
 
 # Include utils dir
-include.(joinpath.(Ref("utils"), readdir("utils/")))
+# include("utils/test_cases.jl")
+include.(joinpath.(Ref("deps"), readdir("deps/")))
+
