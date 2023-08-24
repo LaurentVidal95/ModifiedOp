@@ -20,10 +20,10 @@ launch_computations(silicon, blowup; bandplot_res=50, single_band_res=100, outpu
 Ecut, n_bands)
 ``
 
-All routines are defined in the `utils` directory.
+All routines are defined in the `deps` directory.
 """
 
-include("include_utils.jl")
+include("include_deps.jl")
 
 # Set general parameters, OK for both systems
 Test_parameters = (bandplot_res=50, single_band_res=100, Ecut=5, n_bands=8)
