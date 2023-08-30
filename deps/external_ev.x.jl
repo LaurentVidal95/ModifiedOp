@@ -1,14 +1,14 @@
-function get_EvsV_curve(datafile, kinlabel::Symbol, Ecut::T) where T
+function get_EvsV_curve(datafile, blowup_rate::T, Ecut::T) where T
     data = open(JSON3.read, datafile)
-    a_list = data[kinlabel][Ecut][:LatticeConstants]
-    E₀_list = data[kinlabel][Ecut][:Energies]
+    a_list = data[blowup_rate][Ecut][:LatticeConstants]
+    E₀_list = data[blowup_rate][Ecut][:Energies]
     a_list, E₀_list
 end
 
-function get_evx_input_file(datafile, kinlabel::Symbol, Ecut::T, filename::String) where T
+function get_evx_input_file(datafile, blowup_rate::T, Ecut::T, filename::String) where T
     # Extract data
     @info "Reading data from file $datafile"
-    a_list, E₀_list = get_EvsV_curve(datafile, kinlabel, Ecut)
+    a_list, E₀_list = get_EvsV_curve(datafile, blowup_rate, Ecut)
 
     # Write input file
     file = open(filename, "w")

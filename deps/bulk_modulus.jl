@@ -1,4 +1,4 @@
-code_dir = "/home/lvidal/Documents/CERMICS/these/Modified_kinetic_term/code"
+code_dir = "/home/vidall/projets/modified_kinetic_term/code"
 
 const reffile_si = joinpath(code_dir, "../after_modop/bulk_modulus/silicon_PBE/EvsV_SiPBE.json")
 const reffile_gr = joinpath(code_dir, "../after_modop/bulk_modulus/graphene_PBE/EvsV_GrPBE.json")
@@ -15,7 +15,7 @@ function compute_E₀_vs_V(test_case, Ecut, kgrid, KineticTerm;
                          reference_file)
 
     @info "Storing data in file $(reference_file)"
-    
+
     # Define a range of lattice constants around equilibrium constant a₀
     system = test_case(; kgrid)
     a₀ = system.a₀
@@ -42,6 +42,7 @@ function compute_E₀_vs_V(test_case, Ecut, kgrid, KineticTerm;
     
     # TIME CONSUMING PART
     # Launch SCFs for all constants for given parameters
+    @info "Computations for Ecut=$(Ecut) and blowup rate $(blowup_rate)"
     progress = Progress(N_SCF, desc="Computing SCFs for $(system.name)...")
     for a in a_list
         scfres = system.scf(; KineticTerm, Ecut, a, n_bands=8,
@@ -57,18 +58,23 @@ function compute_E₀_vs_V(test_case, Ecut, kgrid, KineticTerm;
              "/home/../tmp/backup.json", "w")
         next!(progress)
     end
-    
+
+    # Lots of hack in there because of conversion between JSON and
+    # standard types...
     # Enter first data in the reference file
     if !isfile(reference_file)
-        refdata = Dict{Symbol, Any}()
-        refdata[:standard] = Dict{T, Any}()
-        refdata[:modified] = Dict{T, Any}()
-        refdata[kinlabel][Ecut] = output
+        refdata = Dict{String, Any}()
+        refdata["$(blowup_rate)"] = Dict{String, Any}()
+        refdata["$(blowup_rate)"]["$Ecut"] = output
         open(io->JSON3.write(io, refdata, allow_inf=true), reference_file, "w")
     else # or add the data to the reference file
         refdata = open(JSON3.read, reference_file)
         newrefdata = copy_nested_dict(refdata)
-        newrefdata[kinlabel][Ecut] = output
+        T_key = eltype(keys(refdata))
+        if !(T_key("$(blowup_rate)") ∈ keys(newrefdata))
+            newrefdata[T_key("$(blowup_rate)")] = Dict{String, Any}()
+        end
+        newrefdata[T_key("$(blowup_rate)")]["$Ecut"] = output
         open(io->JSON3.write(io, newrefdata, allow_inf=true), reference_file, "w")
     end
 
