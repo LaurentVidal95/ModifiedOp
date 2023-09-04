@@ -1,4 +1,4 @@
-code_dir = "/home/vidall/projets/modified_kinetic_term/code"
+code_dir = "/home/lvidal/Documents/CERMICS/these/Modified_kinetic_term/code"
 
 const reffile_si = joinpath(code_dir, "../after_modop/bulk_modulus/silicon_PBE/EvsV_SiPBE.json")
 const reffile_gr = joinpath(code_dir, "../after_modop/bulk_modulus/graphene_PBE/EvsV_GrPBE.json")
