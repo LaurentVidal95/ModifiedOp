@@ -1,3 +1,10 @@
+function filter_dual(x::T) where T
+    if (!(eltype(x) <: AbstractFloat) && !(eltype(x) <: Int))
+        return x.value
+    end
+    x
+end
+
 """
 Generate k-points coordinates given starting point, end point,
 and the number of wanted k-points.
