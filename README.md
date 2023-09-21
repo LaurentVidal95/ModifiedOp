@@ -16,7 +16,7 @@ to install all the needed dependancies.
 This code runs the computations to perform the numerical experiments from [CHV][^1] section 6.
 
 To run the computations, first open the Julia shell with `julia --project` in your
-local copy of this repository and call `include("launch_computations.jl")` to precompile
+local copy of this repository and call `include("launch_paper_computations.jl")` to precompile
 the code.  Two sets of general parameters are defined. The first one `Test_parameters` are
 used to test that the code didn't break. The second one `Paper_parameters` correspond to the
 parameters used in [CHV][^1].
@@ -29,12 +29,15 @@ Simply define an output directory with `mkdir("../silicon_PBE")` and call
 launch_computations(silicon, blowup; Test_parameters..., output_dir="../silicon_PBE")
 ```
 
-The code also supports graphene with PBE functional. Any other system can be added in `deps/test_cases.jl` 
+The code also supports graphene with PBE functional. Any other system can be added in `deps/common/test_cases.jl`
 by following the same syntaxe. Note that in the parameters, the arguments `bandplot_res` and `single_band_res` 
 control the number of k-points respectively in the full band diagram and in the focus on a single band. 
 The code uses basic finite-difference derivatives, which imposes to fix the parameters above `200` and `2000` respectively, 
 to avoid numerical artifacts. The results of the paper are displayed for `bandplot_res=300` and `single_band_res=4000`.
 Note that the process is time consuming for these parameters and have been run on a cluster.
+
+# Other files
+All the files in `deps/geometry` are not related to the computations of  [CHV][^1].
 
 # Contact
 This is research code, not necessarily user-friendly, actively maintened or extremely robust.

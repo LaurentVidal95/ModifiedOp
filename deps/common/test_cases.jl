@@ -57,7 +57,7 @@ Silicon
 function silicon_PBE(;Ecut_ref=15, basis_kwargs...)
     # Lattice constant of silicon in bohr
     a₀=10.26
-
+    
     # Defines silicon structure and hamiltonian terms
     function model_PBE_silicon(KineticTerm; a=a₀)
         lattice = a / 2 * [[0 1 1.];

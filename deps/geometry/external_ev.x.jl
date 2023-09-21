@@ -1,13 +1,6 @@
 using XMLDict
 using ProgressMeter
 
-function get_EvsV_curve(datafile, blowup_rate::T, Ecut::T) where T
-    data = open(JSON3.read, datafile)
-    a_list = data[blowup_rate][Ecut][:LatticeConstants]
-    E₀_list = data[blowup_rate][Ecut][:Energies]
-    a_list, E₀_list
-end
-
 function get_evx_input_file(datafile, blowup_rate::T, Ecut::T, filename::String) where T
     # Extract data
     a_list, E₀_list = get_EvsV_curve(datafile, blowup_rate, Ecut)

@@ -1,7 +1,7 @@
 code_dir = "/home/lvidal/Documents/CERMICS/these/Modified_kinetic_term/code"
 
-const reffile_si = joinpath(code_dir, "../after_modop/bulk_modulus/silicon_PBE/EvsV_SiPBE.json")
-const reffile_gr = joinpath(code_dir, "../after_modop/bulk_modulus/graphene_PBE/EvsV_GrPBE.json")
+const reffile_si = joinpath(code_dir, "../after_modop/data/EvsV_SiPBE.json")
+const reffile_gr = joinpath(code_dir, "../after_modop/data/EvsV_GrPBE.json")
 
 default_curve_params = (; per_of_variation = 5, N_SCF = 51)
 
@@ -83,8 +83,11 @@ function compute_E₀_vs_V(test_case, Ecut, kgrid, KineticTerm;
     output
 end
 
-function ∂(tab::Vector{T}, Δ::T) where {T<:Real}
-    [(tab[i+1] - tab[i]) / Δ for i in 1:length(tab)-1]
+function get_EvsV_curve(datafile, blowup_rate::T, Ecut::T) where T
+    data = open(JSON3.read, datafile)
+    a_list = data[blowup_rate][Ecut][:LatticeConstants]
+    E₀_list = data[blowup_rate][Ecut][:Energies]
+    a_list, E₀_list
 end
 
 # Needed since its hard to add an entry to a JSON dict.
@@ -99,42 +102,4 @@ function copy_nested_dict(dict)
         end
     end
     new_dict
-end
-
-# # Elastic constant
-# Essayer sans symétrie
-
-"""
-Compute the stresses (= 1/Vol dE(a)/da around the a₀ of an obtained SCF solution.
-"""
-function compute_stresses_wr_lattice_cste(scfres, a₀::T) where {T<:Real}
-    function HF_energy(a::T) where {T}
-        basis = scfres.basis
-        new_lattice = (a/a₀) .* scfres.basis.model.lattice
-        new_model = Model(basis.model; lattice=new_lattice)
-        new_basis = PlaneWaveBasis(new_model,
-                                   basis.Ecut, basis.fft_size, basis.variational,
-                                   basis.kcoords_global, basis.kweights_global,
-                                   basis.kgrid, basis.kshift, basis.symmetries_respect_rgrid,
-                                   basis.comm_kpts, basis.architecture)
-        @show length(G_vectors(new_basis))
-        ρ = compute_density(new_basis, scfres.ψ, scfres.occupation)
-        energies = energy_hamiltonian(new_basis, scfres.ψ, scfres.occupation;
-                                      ρ, scfres.eigenvalues, scfres.εF).energies
-        energies.total
-    end
-    L = scfres.basis.model.lattice
-    Ω = scfres.basis.model.unit_cell_volume
-    stresses = ForwardDiff.derivative(a -> HF_energy(a), a₀) / Ω
-    # DFTK.symmetrize_stresses(scfres.basis, stresses)
-end
-
-function compute_stresses_wr_lattice_cste(system, a₀::T, KineticTerm; basis_kwargs...) where {T<:Real}
-    basis = system.basis(KineticTerm; a=filter_dual(a₀), basis_kwargs...)
-    scfres = self_consistent_field(basis; callback=identity)
-    compute_stresses_wr_lattice_cste(scfres, a₀)
-end
-
-function compute_elastic_constant_wr_lattice_cste(system, a₀::T, KineticTerm; basis_kwargs...) where {T<:Real}
-    ForwardDiff.derivative(a -> compute_stresses_wr_lattice_cste(system, a, KineticTerm; basis_kwargs...), a₀)
 end
