@@ -93,13 +93,12 @@ end
 
 
 # TO DEBUG: Voir point 3) du TODO
-
-"""
-Compute the stresses (= 1/Vol dE(a)/da around the a₀ of an obtained SCF solution.
-"""
-function HF_test(scfres, lattice::AbstractMatrix{T}) where {T}
+function HF_energy_derivative(a, system, KineticTerm)
+    scfres = system.scf(; a, tol=1e-10, n_bands=8)
+    function HF_energy(new_a)
         basis = scfres.basis
-        new_model = Model(basis.model; lattice)
+        lattice = (new_a/a) * basis.model.lattice
+        new_model = Model(basis.model; lattice, symmetries=false)
         new_basis = PlaneWaveBasis(new_model,
                                    basis.Ecut, basis.fft_size, basis.variational,
                                    basis.kcoords_global, basis.kweights_global,
@@ -109,33 +108,9 @@ function HF_test(scfres, lattice::AbstractMatrix{T}) where {T}
         energies = energy_hamiltonian(new_basis, scfres.ψ, scfres.occupation;
                                       ρ, scfres.eigenvalues, scfres.εF).energies
         energies.total
+    end
+    ForwardDiff.derivative(HF_energy, a)
 end
 
-# function compute_stresses_wr_lattice_cste(scfres, a₀::T) where {T<:Real}
-#     function HF_energy(lattice::AbstractMatrix{T}) where {T}
-#         basis = scfres.basis
-#         new_model = Model(basis.model; lattice, symmetries=false)
-#         new_basis = PlaneWaveBasis(new_model,
-#                                    basis.Ecut, basis.fft_size, basis.variational,
-#                                    basis.kcoords_global, basis.kweights_global,
-#                                    basis.kgrid, basis.kshift, basis.symmetries_respect_rgrid,
-#                                    basis.comm_kpts, basis.architecture)
-#         ρ = compute_density(new_basis, scfres.ψ, scfres.occupation)
-#         energies = energy_hamiltonian(new_basis, scfres.ψ, scfres.occupation;
-#                                       ρ, scfres.eigenvalues, scfres.εF).energies
-#         energies.total
-#     end
-#     L = scfres.basis.model.lattice
-#     stresses = ForwardDiff.derivative(a -> HF_energy((a/a₀) .* L), a₀)
-# end
-
-# ## Bugged because of filter_dual..
-# function compute_stresses_wr_lattice_cste(system, a₀::T, KineticTerm; basis_kwargs...) where {T<:Real}
-#     basis = system.basis(KineticTerm; a=a₀, basis_kwargs...)
-#     scfres = self_consistent_field(basis; callback=identity)
-#     compute_stresses_wr_lattice_cste(scfres, a₀)
-# end
-
-# function compute_elastic_constant_wr_lattice_cste(system, a₀::T, KineticTerm; basis_kwargs...) where {T<:Real}
-#     ForwardDiff.derivative(a -> compute_stresses_wr_lattice_cste(system, a, KineticTerm; basis_kwargs...), a₀)
-# end
+HF_energy_second_derivative(a₀, system, KineticTerm) =
+    ForwardDiff.derivative(a->HF_energy_derivative(a, system, KineticTerm), a₀)

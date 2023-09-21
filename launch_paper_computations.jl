@@ -42,7 +42,7 @@ graphene = graphene_PBE(; Ecut_ref=20, kshift=zeros(3), kgrid=[12,12,1])
 function launch_computations(system, blowup; bandplot_res=200, single_band_res=2000,
                              output_dir="", Ecut, n_bands=8)
     # Compute reference band with large Ecut
-    @info "Computing reference ground state density with an SCF routine"
+    @info "Computing reference ground state density with a SCF routine"
     ref_data = reference_data(system; k_path_res=bandplot_res, n_bands)
     n_bands = ref_data.scfres.n_bands_converge
     
