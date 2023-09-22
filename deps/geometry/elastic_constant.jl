@@ -92,7 +92,7 @@ function search_plot_2(reffile, Ecut, deg=0;
 end
 
 
-# TO DEBUG: Voir point 3) du TODO
+# TODO point 3)
 function HF_energy_derivative(a, system, KineticTerm)
     scfres = system.scf(; a, tol=1e-10, n_bands=8)
     function HF_energy(new_a)

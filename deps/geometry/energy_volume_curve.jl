@@ -103,3 +103,42 @@ function copy_nested_dict(dict)
     end
     new_dict
 end
+
+### Find discontinuity on the curve.
+function compute_PW_lengths(system, lattice_constants, Ecut)
+    map(lattice_constants) do a
+        basis = system.basis(Kinetic(); Ecut, a)
+        length(G_vectors(basis))
+    end
+end
+
+function spot_PW_length_jump(test_case, targeted_precision, Ecut;
+                             N_lattice_constants=50,
+                             per_of_variation=10)
+    # First rough
+    system = test_case(;)
+    a₀ = system.a₀
+
+    a_min = (1-per_of_variation/100)*a₀
+    a_max = (1+per_of_variation/100)*a₀
+    a_list = LinRange(a_min, a_max, N_lattice_constants)
+    Δa = a_list[2] - a_list[1]
+
+    maxiter = 10
+    iter = zero(maxiter)
+    i_jump = nothing
+    while (Δa > targeted_precision) && (iter ≤ maxiter)
+        PW_lengths = compute_PW_lengths(system, a_list, Ecut)
+        i_jump = findfirst(i->!iszero(PW_lengths[i+1] - PW_lengths[i]),
+                           1:length(PW_lengths)-1)
+        isnothing(i_jump) && error("No jump detected")
+        a_list = LinRange(a_list[i_jump], a_list[i_jump+1], N_lattice_constants)
+        Δa = a_list[2] - a_list[1]
+        iter += 1
+    end
+    (iter > maxiter) && @warn "Maximum iteration reached"
+    PW_lengths = compute_PW_lengths(system, a_list, Ecut)
+    i_jump = findfirst(i->!iszero(PW_lengths[i+1] - PW_lengths[i]),
+                       1:length(PW_lengths)-1)
+    a_list[i_jump]
+end
