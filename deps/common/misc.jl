@@ -1,6 +1,7 @@
 function filter_dual(x::T) where T
-    if (!(eltype(x) <: AbstractFloat) && !(eltype(x) <: Int))
-        return x.value
+#    if (!(eltype(x) <: AbstractFloat) && !(eltype(x) <: Int))
+    if typeof(x) <: ForwardDiff.Dual
+        return filter_dual(x.value)
     end
     x
 end

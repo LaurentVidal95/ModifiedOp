@@ -93,8 +93,13 @@ end
 
 
 # TODO point 3)
-function HF_energy_derivative(a, system, KineticTerm)
-    scfres = system.scf(; a, tol=1e-10, n_bands=8)
+function HF_energy_derivative(a, system, Ecut, KineticTerm;
+                              hacklist=[])
+    scfres = system.scf(; Ecut, a, tol=1e-10, n_bands=8, callback=identity)
+
+    # hack to extract all information while only calling second derivative
+    # routine. Allow to compute E, dE and d^2E in a single call.
+    push!(hacklist, filter_dual(a))
     function HF_energy(new_a)
         basis = scfres.basis
         lattice = (new_a/a) * basis.model.lattice
@@ -107,10 +112,25 @@ function HF_energy_derivative(a, system, KineticTerm)
         ρ = compute_density(new_basis, scfres.ψ, scfres.occupation)
         energies = energy_hamiltonian(new_basis, scfres.ψ, scfres.occupation;
                                       ρ, scfres.eigenvalues, scfres.εF).energies
-        energies.total
+        # Extract total energy value from loop
+        E = energies.total
+        push!(hacklist, filter_dual(E))
+        E
     end
-    ForwardDiff.derivative(HF_energy, a)
+    dE = ForwardDiff.derivative(HF_energy, a)
+    push!(hacklist, filter_dual(dE))
+
+    dE
 end
 
-HF_energy_second_derivative(a₀, system, KineticTerm) =
-    ForwardDiff.derivative(a->HF_energy_derivative(a, system, KineticTerm), a₀)
+function HF_energy_second_derivative(a₀, system, Ecut, KineticTerm;
+                                     return_energy_and_derivative=false)
+    hacklist = []
+    d2E = ForwardDiff.derivative(
+        a->HF_energy_derivative(a, system, Ecut, KineticTerm; hacklist), a₀
+    )
+    push!(hacklist, d2E)
+    (return_energy_and_derivative) && (return hacklist)
+    d2E
+end
+
